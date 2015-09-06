@@ -19,7 +19,7 @@ class Mnist
         return Int(UInt32(array[0]) * p16_3 + UInt32(array[1]) * p16_2 + UInt32(array[2]) * p16_1 + UInt32(array[3]))
     }
     
-    func read()
+    func read() -> [UInt8]
     {
         let trainImgFile   = "MNIST/train-images-idx3-ubyte"
         let trainLabelFile = "MNIST/train-labels-idx1-ubyte"
@@ -89,6 +89,8 @@ class Mnist
             }
             
             println(error)
+            return pixels
         }
+        return [UInt8]()
     }
 }

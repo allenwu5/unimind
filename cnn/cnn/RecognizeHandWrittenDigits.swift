@@ -12,12 +12,14 @@ import Foundation
 class RecognizeHandWrittenDigits
 {
     let ULONG_MAX:Int = 65535
-    func run()
+    let NN = NeuralNetwork()  // for easier nomenclature
+    
+    func initNN()
     {
         // initialize and build the neural net
         
-        var NN = NeuralNetwork()  // for easier nomenclature
-//        NN.initialize()
+        
+        // NN.initialize()
         
         // layer zero, the input layer.
         // Create neurons: exactly the same number of neurons as the input

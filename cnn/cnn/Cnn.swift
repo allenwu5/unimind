@@ -21,10 +21,6 @@ class NeuralNetwork
 {
     var layers = [Layer]()
     
-    init()
-    {
-    }
-    
     // Think with known weights
     func forward(input:[Float],var output:[Float])
     {
@@ -44,6 +40,7 @@ class NeuralNetwork
         
         // get outputs via last layer
         var count = 0;
+        let lastLayerNeuronsCount = layers.last!.neurons.count
         for n in layers.last!.neurons
         {
             output[count++] = n.value
