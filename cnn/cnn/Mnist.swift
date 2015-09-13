@@ -11,8 +11,14 @@ import Foundation
 class Mnist
 {
     let p16_1:UInt32 = 16 * 16
-    let p16_2:UInt32 = 16 * 16 * 16 * 16
-    let p16_3:UInt32 = 16 * 16 * 16 * 16 * 16 * 16
+    let p16_2:UInt32
+    let p16_3:UInt32
+
+    init ()
+    {
+        p16_2 = p16_1 * p16_1
+        p16_3 = p16_2 * p16_1
+    }
     
     func convertDigit(array:[UInt8])->Int
     {
@@ -88,7 +94,7 @@ class Mnist
                 }
             }
             
-            println(error)
+            println("error: \(error)")
             return pixels
         }
         return [UInt8]()

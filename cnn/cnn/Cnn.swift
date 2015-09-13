@@ -22,7 +22,7 @@ class NeuralNetwork
     var layers = [Layer]()
     
     // Think with known weights
-    func forward(input:[Float],var output:[Float])
+    func forward(input:[Float],inout output:[Float])
     {
         var firstLayer = layers.first!
         // feed input to first layer
@@ -40,7 +40,6 @@ class NeuralNetwork
         
         // get outputs via last layer
         var count = 0;
-        let lastLayerNeuronsCount = layers.last!.neurons.count
         for n in layers.last!.neurons
         {
             output[count++] = n.value
@@ -49,8 +48,10 @@ class NeuralNetwork
     }
     
     // Training weights
-    func backPropagate(actualOutput:[Float], desiredOutput:[Float], eta:Float)
+    func backPropagate(inout actualOutput:[Float], inout desiredOutput:[Float], eta:Float)
     {
+        // Xnm1 means Xn-1
+        
         // Backpropagates through the neural net
         // Proceed from the last layer to the first, iteratively
         // We calculate the last layer separately, and first,
@@ -71,9 +72,7 @@ class NeuralNetwork
         //   Conveniently, for F = tanh,
         //   then F'(Yn) = 1 - Xn^2, i.e., the derivative can be
         //   calculated from the output, without knowledge of the input
-        
-        
-        
+
         var ii:Int = 0
         
         var differentials = [[Float]](count: layers.count, repeatedValue: [Float]())
@@ -81,9 +80,9 @@ class NeuralNetwork
         {
             differentials[ ii ] = [Float](count: layers[ii].neurons.count, repeatedValue: 0.0 )
         }
-        
+
 //        int iSize = m_Layers.size();
-        
+
 //        differentials.resize( iSize );
 
         
@@ -115,13 +114,9 @@ class NeuralNetwork
         // of dErr_wrt_dXn for the next iterated layer
         
 //        let eta:Float = 0.0005;
-        ii = layers.count - 1;
-        for (; ii>0; --ii)
-        {
-            layers[ii].backPropagate( differentials[ ii ], dErr_wrt_dXnm1: differentials[ ii - 1 ], eta: eta)
+        for (ii = layers.count - 1; ii>0; --ii) {
+            layers[ii].backPropagate(&differentials[ii], dErr_wrt_dXnm1: &differentials[ii - 1], eta: eta)
         }
-        
-        differentials.removeAll(keepCapacity: false)
     }
 }
 
@@ -181,15 +176,15 @@ class Layer
         return 1.0 / (1.0 + exp(-f))
     }
     
-    func backPropagate(var dErr_wrt_dXn:[Float], var dErr_wrt_dXnm1:[Float], eta:Float)
+    func backPropagate(inout dErr_wrt_dXn:[Float], inout dErr_wrt_dXnm1:[Float], eta:Float)
     {
-        var dErr_wrt_dYn = [Float](count:neurons.count, repeatedValue: 0.0)
+        var dErr_wrt_dYn = [Float]()
         // calculate equation (3): dErr_wrt_dYn = F'(Yn) * dErr_wrt_Xn
         var ii:Int
         for ( ii=0; ii<neurons.count; ++ii )
         {
             var output = neurons[ ii ].value
-            dErr_wrt_dYn[ ii ] = sigmiod( output ) * dErr_wrt_dXn[ ii ]
+            dErr_wrt_dYn.append(sigmiod( output ) * dErr_wrt_dXn[ ii ])
         }
         
         // calculate equation (4): dErr_wrt_Wn = Xnm1 * dErr_wrt_Yn
@@ -197,7 +192,8 @@ class Layer
         // the list of connections from the prior layer, and
         // update the differential for the corresponding weight
         
-        var dErr_wrt_dWn = [Float]()
+        var dErr_wrt_dWn = [Float](count: weights.count, repeatedValue: 0.0)
+        
         ii = 0
         for n in neurons
         {
@@ -221,7 +217,7 @@ class Layer
                 dErr_wrt_dWn[ c.weightIndex ] += dErr_wrt_dYn[ ii ] * output
             }
             
-            ii++
+            ++ii
         }
         
         // calculate equation (5): dErr_wrt_Xnm1 = Wn * dErr_wrt_dYn,

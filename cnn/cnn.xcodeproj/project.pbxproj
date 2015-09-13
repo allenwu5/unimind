@@ -168,6 +168,7 @@
 		BF6097AE1B974638001F3E65 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				CLASSPREFIX = "";
 				LastUpgradeCheck = 0640;
 				ORGANIZATIONNAME = len;
 				TargetAttributes = {
