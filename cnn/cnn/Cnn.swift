@@ -8,12 +8,12 @@
 
 import Foundation
 
-func sigmoid(f: Float) -> Float
+func sigmoid(f: Double) -> Double
 {
-    let s = 1.7159*tanh(0.66666667*f)
+    let s:Double = 1.7159*tanh(0.66666667*f)
     return s
 }
-func dSigmoid(f: Float) -> Float
+func dSigmoid(f: Double) -> Double
 {
     let s = 0.66666667/1.7159*(1.7159+(f))*(1.7159-(f))
     return s
@@ -26,7 +26,7 @@ class NeuralNetwork
     var layers = [Layer]()
 
     // Think with known weights
-    func forward(input:[Float]) -> [Float]
+    func forward(input:[Double]) -> [Double]
     {
         let firstLayer = layers.first!
 
@@ -46,7 +46,7 @@ class NeuralNetwork
         let lastLayer = layers.last!
         // get outputs via last layer
 
-        var output = [Float]()
+        var output = [Double]()
         for(var i = 0; i < lastLayer.neurons.count; ++i)
         {
             output.append(lastLayer.neurons[i].value)
@@ -55,7 +55,7 @@ class NeuralNetwork
     }
     
     // Training weights
-    func backPropagate(actualOutput:[Float], desiredOutput:[Float], eta:Float)
+    func backPropagate(actualOutput:[Double], desiredOutput:[Double], eta:Double)
     {
         // Xnm1 means Xn-1
         
@@ -82,10 +82,10 @@ class NeuralNetwork
 
 
 
-        var differentials = [[Float]]()
+        var differentials = [[Double]]()
         for (var ii=0; ii<layers.count; ++ii )
         {
-            differentials.append([Float](count: layers[ii].neurons.count, repeatedValue: 0.0))
+            differentials.append([Double](count: layers[ii].neurons.count, repeatedValue: 0.0))
         }
 
 
@@ -122,12 +122,12 @@ class NeuralNetwork
         // dErr_wrt_dXnm1 for use as the input value
         // of dErr_wrt_dXn for the next iterated layer
         
-//        let eta:Float = 0.0005;
+//        let eta:Double = 0.0005;
         for (var bIt = differentials.count - 1; bIt > 0; --bIt) {
             layers[bIt].backPropagate(differentials[bIt], dErr_wrt_dXnm1: &differentials[bIt - 1], eta: eta)
         }
 
-        var dSum:Float = 0
+        var dSum:Double = 0
         for d in differentials[differentials.count - 1]
         {
             dSum += d
@@ -170,9 +170,9 @@ class Layer
             // weight of the first connection is the bias;
             // its neuron-index is ignored
 
-            let bias:Float = weights[firstConn.weightIndex].value
+            let bias:Double = weights[firstConn.weightIndex].value
 
-            var sum:Float = 0
+            var sum:Double = 0
 
             for (var i = 1; i < n.connections.count; ++i) {
                 let conn = n.connections[i]
@@ -195,9 +195,9 @@ class Layer
         }
     }
     
-    func backPropagate(dErr_wrt_dXn:[Float], inout dErr_wrt_dXnm1:[Float], eta:Float)
+    func backPropagate(dErr_wrt_dXn:[Double], inout dErr_wrt_dXnm1:[Double], eta:Double)
     {
-        var dErr_wrt_dYn = [Float]()
+        var dErr_wrt_dYn = [Double]()
         // calculate equation (3): dErr_wrt_dYn = F'(Yn) * dErr_wrt_Xn
         var ii:Int
         for ( ii=0; ii<neurons.count; ++ii )
@@ -211,7 +211,7 @@ class Layer
         // the list of connections from the prior layer, and
         // update the differential for the corresponding weight
         
-        var dErr_wrt_dWn = [Float](count: weights.count, repeatedValue: 0.0)
+        var dErr_wrt_dWn = [Double](count: weights.count, repeatedValue: 0.0)
         
         ii = 0
         for n in neurons
@@ -222,7 +222,7 @@ class Layer
             {
 //                kk = (*cit).NeuronIndex;
                 
-                var output:Float
+                var output:Double
                 let nIdx = c.neuronIndex
                 if ( nIdx == ULONG_MAX )
                 {
@@ -270,7 +270,7 @@ class Layer
             ii++  // ii tracks the neuron iterator
         }
 //
-//        var dErr_wrt_dXnm1_sum:Float = 0.0
+//        var dErr_wrt_dXnm1_sum:Double = 0.0
 //        for v in dErr_wrt_dXnm1
 //        {
 //            dErr_wrt_dXnm1_sum += v
@@ -301,11 +301,11 @@ class Layer
 class Neuron
 {
     var label:String = ""
-    var value:Float = 0.0
+    var value:Double = 0.0
     init()
     {
     }
-    init(value:Float)
+    init(value:Double)
     {
         self.value = value
     }
@@ -340,12 +340,12 @@ class Connection
 
 class Weight
 {
-    var value:Float
+    var value:Double
     init()
     {
         self.value = 0.0
     }
-    init(value:Float)
+    init(value:Double)
     {
         self.value = value
     }

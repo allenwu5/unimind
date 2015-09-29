@@ -281,9 +281,9 @@ class RecognizeDigits
         }
     }
     
-    func UNIFORM_PLUS_MINUS_ONE() -> Float
+    func UNIFORM_PLUS_MINUS_ONE() -> Double
     {
         // random value range: -1.0 ~ 1.0
-        return (2.0 * Float(arc4random()) / Float(UINT32_MAX)) - 1.0
+        return (2.0 * Double(arc4random()) / Double(UINT32_MAX)) - 1.0
     }
 }

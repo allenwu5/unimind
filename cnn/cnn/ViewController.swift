@@ -26,19 +26,26 @@ class ViewController: UIViewController {
         rhwd.initNN()
 
         // learning rate
-        let eta:Float = 0.01
+        let eta:Double = 0.02
         let iterations = 2
+        let trainCount = 50
+        
 
-
-        for (var t = 0; t < 5; ++t)
+        for (var t = 0; t < 4; ++t)
         {
+            var c = 0
             for ins in mnist.iInstances
             {
-                let nnInput:[Float] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
+                if (c++ >= trainCount)
+                {
+                    break
+                }
+                
+                let nnInput:[Double] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
 
                 // 10 outpus for 0 ~ 9
 
-                var desiredOutput = [Float](count: 10, repeatedValue: -1)
+                var desiredOutput = [Double](count: 10, repeatedValue: -1)
                 desiredOutput[ins.iLabel] = 1
 
                 print("NN Iteration for label: \(ins.iLabel)==============================")
@@ -68,7 +75,7 @@ class ViewController: UIViewController {
             // *
             // * NO INPUT
             // *
-            let nnInput:[Float] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
+            let nnInput:[Double] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
 
             print("NN FW for label: \(ins.iLabel)==============================")
             let output = rhwd.NN.forward(nnInput)
@@ -86,7 +93,7 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func printOutput(aOutput:[Float])
+    func printOutput(aOutput:[Double])
     {
         var idx = 0
         for n in aOutput
@@ -95,10 +102,10 @@ class ViewController: UIViewController {
         }
     }
     
-    func printOutputIndex(aOutput:[Float]) -> Int
+    func printOutputIndex(aOutput:[Double]) -> Int
     {
         var idx = -1
-        var max:Float = 0.0
+        var max:Double = 0.0
         for (var i = 0; i < aOutput.count; ++i)
         {
             if (idx == -1 || aOutput[i] >= max)
