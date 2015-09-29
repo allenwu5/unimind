@@ -13,58 +13,71 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        
-        println("Start==============================")
-        
-        println("Minist reading==============================")
+
+        print("Start==============================")
+
+        print("Minist reading==============================")
         let mnist = Mnist()
-        let pixels:[UInt8] = mnist.read()
-        var inputs = [Float]()
-        
-        let testImgNum = 1;
-        
-        let imgSize = 28,   imgArea   = imgSize   * imgSize
-        let inputSize = 29, inputArea = inputSize * inputSize
-        
-        for (var i = 0; i < testImgNum; ++i)
-        {
-            for (var j = 0; j < imgArea; ++j)
-            {
-                let idx = (i * imgArea) + j
-                inputs.append(Float(pixels[idx]))
-            }
-            for (var a = 0; a < inputArea - imgArea; ++a)
-            {
-                inputs.append(0.0)
-            }
-        }
-        assert(inputs.count == testImgNum * inputArea)
-        
-        // 10 outpus for 0 ~ 9
-        var outputs = [Float](count: 10, repeatedValue: 0.0)
-        var desiredOutput = [Float](count: 10, repeatedValue: 0.0)
-        // desired........
-        desiredOutput[5] = 1
-        
-        println("NN init==============================")
-        let rhwd = RecognizeHandWrittenDigits()
+        mnist.read(20)
+
+
+        print("NN init==============================")
+        let rhwd = RecognizeDigits()
         rhwd.initNN()
-        
-        var eta:Float = 0.005
-        
-        println("NN BP==============================")
-        for (var i = 0; i < 10; ++i)
+
+        // learning rate
+        let eta:Float = 0.01
+        let iterations = 2
+
+
+        for (var t = 0; t < 5; ++t)
         {
-            rhwd.NN.backPropagate(&outputs, desiredOutput: &desiredOutput, eta: eta)
-            rhwd.NN.forward(inputs, output: &outputs)
-            printOutputs(outputs)
+            for ins in mnist.iInstances
+            {
+                let nnInput:[Float] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
+
+                // 10 outpus for 0 ~ 9
+
+                var desiredOutput = [Float](count: 10, repeatedValue: -1)
+                desiredOutput[ins.iLabel] = 1
+
+                print("NN Iteration for label: \(ins.iLabel)==============================")
+
+                for (var i = 0; i < iterations; ++i)
+                {
+                    print(">", terminator:" ")
+                    let output = rhwd.NN.forward(nnInput)
+
+                    print("<", terminator:" ")
+                    rhwd.NN.backPropagate(output, desiredOutput: desiredOutput, eta: eta)
+
+                    printOutputIndex(output)
+
+                }
+                print("")
+
+            }
         }
 
-        println("NN FW==============================")
-        rhwd.NN.forward(inputs, output: &outputs)
-        printOutputs(outputs)
-        
-        println("Done==============================")
+        print("NN Recall==============================")
+
+
+        var penalty = 0
+        for ins in mnist.iInstances
+        {
+            // *
+            // * NO INPUT
+            // *
+            let nnInput:[Float] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
+
+            print("NN FW for label: \(ins.iLabel)==============================")
+            let output = rhwd.NN.forward(nnInput)
+            let result = printOutputIndex(output)
+            penalty += ins.iLabel == result ? 0 : 1
+        }
+
+        print("Done==============================")
+        print("Penalty: \(penalty) / \(mnist.iInstances.count)")
 
     }
 
@@ -73,13 +86,29 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func printOutputs(outputs:[Float])
+    func printOutput(aOutput:[Float])
     {
         var idx = 0
-        for n in outputs
+        for n in aOutput
         {
-            println("\(idx++): \(n)")
+            print("\(idx++): \(n + 2)")
         }
+    }
+    
+    func printOutputIndex(aOutput:[Float]) -> Int
+    {
+        var idx = -1
+        var max:Float = 0.0
+        for (var i = 0; i < aOutput.count; ++i)
+        {
+            if (idx == -1 || aOutput[i] >= max)
+            {
+                idx = i
+                max = aOutput[i]
+            }
+        }
+        print("index: \(idx)")
+        return idx
     }
 }
 

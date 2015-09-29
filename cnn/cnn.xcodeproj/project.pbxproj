@@ -14,7 +14,7 @@
 		BF6097C61B974638001F3E65 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = BF6097C41B974638001F3E65 /* LaunchScreen.xib */; };
 		BF6097D21B974638001F3E65 /* cnnTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6097D11B974638001F3E65 /* cnnTests.swift */; };
 		BF6097DE1B97468C001F3E65 /* Cnn.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6097DB1B97468C001F3E65 /* Cnn.swift */; };
-		BF6097DF1B97468C001F3E65 /* RecognizeHandWrittenDigits.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6097DC1B97468C001F3E65 /* RecognizeHandWrittenDigits.swift */; };
+		BF6097DF1B97468C001F3E65 /* RecognizeDigits.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6097DC1B97468C001F3E65 /* RecognizeDigits.swift */; };
 		BF6097E01B97468C001F3E65 /* Mnist.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6097DD1B97468C001F3E65 /* Mnist.swift */; };
 		BF6097E21B9746BB001F3E65 /* MNIST in Resources */ = {isa = PBXBuildFile; fileRef = BF6097E11B9746BB001F3E65 /* MNIST */; };
 /* End PBXBuildFile section */
@@ -41,7 +41,7 @@
 		BF6097D01B974638001F3E65 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BF6097D11B974638001F3E65 /* cnnTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cnnTests.swift; sourceTree = "<group>"; };
 		BF6097DB1B97468C001F3E65 /* Cnn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cnn.swift; sourceTree = "<group>"; };
-		BF6097DC1B97468C001F3E65 /* RecognizeHandWrittenDigits.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecognizeHandWrittenDigits.swift; sourceTree = "<group>"; };
+		BF6097DC1B97468C001F3E65 /* RecognizeDigits.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecognizeDigits.swift; sourceTree = "<group>"; };
 		BF6097DD1B97468C001F3E65 /* Mnist.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Mnist.swift; sourceTree = "<group>"; };
 		BF6097E11B9746BB001F3E65 /* MNIST */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MNIST; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -87,7 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				BF6097DB1B97468C001F3E65 /* Cnn.swift */,
-				BF6097DC1B97468C001F3E65 /* RecognizeHandWrittenDigits.swift */,
+				BF6097DC1B97468C001F3E65 /* RecognizeDigits.swift */,
 				BF6097DD1B97468C001F3E65 /* Mnist.swift */,
 				BF6097BB1B974638001F3E65 /* AppDelegate.swift */,
 				BF6097BD1B974638001F3E65 /* ViewController.swift */,
@@ -169,7 +169,8 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = "";
-				LastUpgradeCheck = 0640;
+				LastSwiftUpdateCheck = 0700;
+				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = len;
 				TargetAttributes = {
 					BF6097B51B974638001F3E65 = {
@@ -226,7 +227,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BF6097DF1B97468C001F3E65 /* RecognizeHandWrittenDigits.swift in Sources */,
+				BF6097DF1B97468C001F3E65 /* RecognizeDigits.swift in Sources */,
 				BF6097BE1B974638001F3E65 /* ViewController.swift in Sources */,
 				BF6097DE1B97468C001F3E65 /* Cnn.swift in Sources */,
 				BF6097BC1B974638001F3E65 /* AppDelegate.swift in Sources */,
@@ -293,6 +294,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -308,7 +310,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -346,7 +348,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
@@ -359,6 +361,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = cnn/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "tw.unimind.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -369,6 +372,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = cnn/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "tw.unimind.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -387,6 +391,7 @@
 				);
 				INFOPLIST_FILE = cnnTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "tw.unimind.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/cnn.app/cnn";
 			};
@@ -402,6 +407,7 @@
 				);
 				INFOPLIST_FILE = cnnTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "tw.unimind.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/cnn.app/cnn";
 			};

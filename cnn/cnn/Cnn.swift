@@ -8,11 +8,15 @@
 
 import Foundation
 
-class Flow{
-    func run()
-    {
-        println("Run cnn flow")
-    }
+func sigmoid(f: Float) -> Float
+{
+    let s = 1.7159*tanh(0.66666667*f)
+    return s
+}
+func dSigmoid(f: Float) -> Float
+{
+    let s = 0.66666667/1.7159*(1.7159+(f))*(1.7159-(f))
+    return s
 }
 
 // Neural Network class
@@ -20,35 +24,38 @@ class Flow{
 class NeuralNetwork
 {
     var layers = [Layer]()
-    
+
     // Think with known weights
-    func forward(input:[Float],inout output:[Float])
+    func forward(input:[Float]) -> [Float]
     {
-        var firstLayer = layers.first!
+        let firstLayer = layers.first!
+
+        assert(firstLayer.neurons.count == input.count)
         // feed input to first layer
-        for i in input
+        for(var i = 0; i < input.count; ++i)
         {
-            firstLayer.neurons.append(Neuron(value: i))
+            firstLayer.neurons[i].value = input[i]
         }
         
         // forward layer by layer
         for(var i = 1; i < layers.count; ++i)
         {
-            layers[i].prev = layers[i-1]
             layers[i].forward()
         }
-        
+
+        let lastLayer = layers.last!
         // get outputs via last layer
-        var count = 0;
-        for n in layers.last!.neurons
+
+        var output = [Float]()
+        for(var i = 0; i < lastLayer.neurons.count; ++i)
         {
-            output[count++] = n.value
+            output.append(lastLayer.neurons[i].value)
         }
-        assert(count > 0, "No output of last NN layer !")
+        return output
     }
     
     // Training weights
-    func backPropagate(inout actualOutput:[Float], inout desiredOutput:[Float], eta:Float)
+    func backPropagate(actualOutput:[Float], desiredOutput:[Float], eta:Float)
     {
         // Xnm1 means Xn-1
         
@@ -73,13 +80,14 @@ class NeuralNetwork
         //   then F'(Yn) = 1 - Xn^2, i.e., the derivative can be
         //   calculated from the output, without knowledge of the input
 
-        var ii:Int = 0
-        
-        var differentials = [[Float]](count: layers.count, repeatedValue: [Float]())
-        for ( ii=0; ii<differentials.count; ++ii )
+
+
+        var differentials = [[Float]]()
+        for (var ii=0; ii<layers.count; ++ii )
         {
-            differentials[ ii ] = [Float](count: layers[ii].neurons.count, repeatedValue: 0.0 )
+            differentials.append([Float](count: layers[ii].neurons.count, repeatedValue: 0.0))
         }
+
 
 //        int iSize = m_Layers.size();
 
@@ -92,9 +100,10 @@ class NeuralNetwork
         // the difference between the target and the actual
         
         let lastLayer = layers.last!
-        for ( ii=0; ii<lastLayer.neurons.count; ++ii )
+        for (var ii=0; ii<lastLayer.neurons.count; ++ii )
         {
             differentials[differentials.count-1][ ii ] = actualOutput[ ii ] - desiredOutput[ ii ]
+            //print(differentials[differentials.count-1][ ii ])
         }
         
         
@@ -114,9 +123,16 @@ class NeuralNetwork
         // of dErr_wrt_dXn for the next iterated layer
         
 //        let eta:Float = 0.0005;
-        for (ii = layers.count - 1; ii>0; --ii) {
-            layers[ii].backPropagate(&differentials[ii], dErr_wrt_dXnm1: &differentials[ii - 1], eta: eta)
+        for (var bIt = differentials.count - 1; bIt > 0; --bIt) {
+            layers[bIt].backPropagate(differentials[bIt], dErr_wrt_dXnm1: &differentials[bIt - 1], eta: eta)
         }
+
+        var dSum:Float = 0
+        for d in differentials[differentials.count - 1]
+        {
+            dSum += d
+        }
+//        print("dSum = \(dSum)")
     }
 }
 
@@ -128,7 +144,7 @@ class Layer
     var prev:Layer!
     var neurons = [Neuron]()
     var weights = [Weight]()
-    let ULONG_MAX:Int = 65535
+    let ULONG_MAX:Int = 4294967295
     let label:String
     
     init(label:String)
@@ -142,49 +158,52 @@ class Layer
         self.prev = prev
     }
     
-    func forward()
-    {
+    func forward() {
+        //print(label)
         assert(prev.neurons.count > 0, "Previous layer must has neurons !")
-        
-        for n in neurons
-        {
+        assert(prev.label != label)
+
+        for n in neurons {
             let firstConn = n.connections.first!
             assert(firstConn.weightIndex < weights.count)
-            
+
             // weight of the first connection is the bias;
             // its neuron-index is ignored
-            
-            let bias = weights[firstConn.weightIndex].value
-            
-            var sum:Float = bias
-            
-            for (var i = 1; i < n.connections.count; ++i)
-            {
-                var conn = n.connections[i]
-                assert(conn.weightIndex < weights.count, "conn.weightIndex < weights.count")
-                assert(conn.neuronIndex < prev.neurons.count, "conn.neuronIndex < prev.neurons.count")
-                sum += weights[conn.weightIndex].value * prev.neurons[conn.neuronIndex].value
+
+            let bias:Float = weights[firstConn.weightIndex].value
+
+            var sum:Float = 0
+
+            for (var i = 1; i < n.connections.count; ++i) {
+                let conn = n.connections[i]
+                assert(conn.weightIndex < weights.count)
+                assert(conn.neuronIndex < prev.neurons.count)
+
+                let w = weights[conn.weightIndex].value
+
+                if (w != 0) {
+                    let v = w * prev.neurons[conn.neuronIndex].value
+                    if (v != 0) {
+                        sum += v
+                    }
+                }
             }
-            
+
             // activation function
-            n.value = self.sigmiod(sum)
+            let s = sigmoid(sum + bias)
+            n.value = s
         }
     }
     
-    
-    func sigmiod(f: Float)->Float{
-        return 1.0 / (1.0 + exp(-f))
-    }
-    
-    func backPropagate(inout dErr_wrt_dXn:[Float], inout dErr_wrt_dXnm1:[Float], eta:Float)
+    func backPropagate(dErr_wrt_dXn:[Float], inout dErr_wrt_dXnm1:[Float], eta:Float)
     {
         var dErr_wrt_dYn = [Float]()
         // calculate equation (3): dErr_wrt_dYn = F'(Yn) * dErr_wrt_Xn
         var ii:Int
         for ( ii=0; ii<neurons.count; ++ii )
         {
-            var output = neurons[ ii ].value
-            dErr_wrt_dYn.append(sigmiod( output ) * dErr_wrt_dXn[ ii ])
+            let output = neurons[ ii ].value
+            dErr_wrt_dYn.append(dSigmoid( output ) * dErr_wrt_dXn[ ii ])
         }
         
         // calculate equation (4): dErr_wrt_Wn = Xnm1 * dErr_wrt_Yn
@@ -250,16 +269,27 @@ class Layer
             
             ii++  // ii tracks the neuron iterator
         }
+//
+//        var dErr_wrt_dXnm1_sum:Float = 0.0
+//        for v in dErr_wrt_dXnm1
+//        {
+//            dErr_wrt_dXnm1_sum += v
+//        }
+//        print("dErr_wrt_dXnm1_sum \(dErr_wrt_dXnm1_sum)")
         
         // calculate equation (6): update the weights
         // in this layer using dErr_wrt_dW (from
         // equation (4)    and the learning rate eta
         
-
+        // turing bias too here
         for (var jj = 0; jj < weights.count; ++jj)
         {
             let oldValue = weights[ jj ].value
-            let newValue = oldValue/*.dd*/ - eta * dErr_wrt_dWn[ jj ]
+            let d = dErr_wrt_dWn[ jj ]
+            let diff = eta * d
+
+            let newValue = oldValue/*.dd*/ - diff
+            
             weights[ jj ].value = newValue
         }
     }

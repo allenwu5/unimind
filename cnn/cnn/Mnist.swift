@@ -14,10 +14,26 @@ class Mnist
     let p16_2:UInt32
     let p16_3:UInt32
 
+    let iLen32 = sizeof(UInt32)
+    let iLen8  = sizeof(UInt8)
+
+    var iInstances = [MnistInstance]()
+
     init ()
     {
         p16_2 = p16_1 * p16_1
         p16_3 = p16_2 * p16_1
+    }
+
+    func read(aTestCount:Int)
+    {
+        readTrainImages(aTestCount)
+        readTrainLabels()
+
+        for i:MnistInstance in iInstances
+        {
+            i.printImage()
+        }
     }
     
     func convertDigit(array:[UInt8])->Int
@@ -25,10 +41,9 @@ class Mnist
         return Int(UInt32(array[0]) * p16_3 + UInt32(array[1]) * p16_2 + UInt32(array[2]) * p16_1 + UInt32(array[3]))
     }
     
-    func read() -> [UInt8]
+    func readTrainImages(aTestCount:Int)
     {
         let trainImgFile   = "MNIST/train-images-idx3-ubyte"
-        let trainLabelFile = "MNIST/train-labels-idx1-ubyte"
         
         //        TRAINING SET IMAGE FILE (train-images-idx3-ubyte):
         //
@@ -46,57 +61,142 @@ class Mnist
             var error:NSError?
             //            let s = String(contentsOfFile: path, encoding: NSUTF8StringEncoding, error: &error)
             let data = NSData(contentsOfFile: path)!
-            
-            let len32 = sizeof(UInt32)
-            
-            var buffer = [UInt8](count: len32, repeatedValue: 0)
-            data.getBytes(&buffer, range: NSMakeRange(0, len32))
+
+            // Read 4 attributes
+            var offset = 0
+
+            var buffer = [UInt8](count: iLen32, repeatedValue: 0)
+            data.getBytes(&buffer, range: NSMakeRange(offset, iLen32))
+            offset += iLen32
             let magicNum = convertDigit(buffer)
-            data.getBytes(&buffer, range: NSMakeRange(len32, len32))
+
+            data.getBytes(&buffer, range: NSMakeRange(offset, iLen32))
+            offset += iLen32
             let imgNum = convertDigit(buffer)
-            data.getBytes(&buffer, range: NSMakeRange(len32 * 2, len32))
+
+            data.getBytes(&buffer, range: NSMakeRange(offset, iLen32))
+            offset += iLen32
             let rowNum = convertDigit(buffer)
-            data.getBytes(&buffer, range: NSMakeRange(len32 * 3, len32))
+
+            data.getBytes(&buffer, range: NSMakeRange(offset, iLen32))
+            offset += iLen32
             let colNum = convertDigit(buffer)
-            
-            // the number of elements:
-            let count = (data.length - (len32 * 4)) / sizeof(UInt8)
-            
-            
-            // create array of appropriate length:
-            var pixels = [UInt8](count: count, repeatedValue: 0)
-            
-            // copy bytes into array
-            data.getBytes(&pixels, range: NSMakeRange(len32 * 4, count))
-            
-            var img = [[UInt8]](count:rowNum, repeatedValue:[UInt8](count:colNum, repeatedValue:0))
-            var idx = 0;
-            
-            let testImgNum = 5;
-            for (var i = 0; i < testImgNum; ++i)
+
+            for (var i = 0; i < aTestCount; ++i)
             {
-                for (var r = 0; r < rowNum; ++r)
-                {
-                    for (var c = 0; c < colNum; ++c)
-                    {
-                        img[r][c] = pixels[idx++]
-                    }
-                }
-                
-                for (var r = 0; r < rowNum; ++r)
-                {
-                    for (var c = 0; c < colNum; ++c)
-                    {
-                        let b = img[r][c] > 0 ? "*" : " "
-                        print(" \(b)")
-                    }
-                    println();
-                }
+                let ins = MnistInstance()
+
+                ins.iHeight = rowNum
+                ins.iWidth = colNum
+
+                let bytes = ins.getArea() * iLen8
+                ins.iImage = [UInt8](count: bytes, repeatedValue: 0)
+
+                data.getBytes(&(ins.iImage), range: NSMakeRange(offset, bytes))
+                offset += bytes;
+
+                iInstances.append(ins)
             }
-            
-            println("error: \(error)")
-            return pixels
+
+            print("error: \(error)")
         }
-        return [UInt8]()
+    }
+
+    func readTrainLabels()
+    {
+        let trainLabelFile = "MNIST/train-labels-idx1-ubyte"
+//        [offset] [type]          [value]          [description]
+//        0000     32 bit integer  0x00000801(2049) magic number (MSB first)
+//        0004     32 bit integer  60000            number of items
+//        0008     unsigned byte   ??               label
+//        0009     unsigned byte   ??               label
+//            ........
+//            xxxx     unsigned byte   ??               label
+
+        if let path = NSBundle.mainBundle().pathForResource(trainLabelFile, ofType:"") {
+            var error:NSError?
+            //            let s = String(contentsOfFile: path, encoding: NSUTF8StringEncoding, error: &error)
+            let data = NSData(contentsOfFile: path)!
+
+            var offset = 0
+
+            var buffer = [UInt8](count: iLen32, repeatedValue: 0)
+            data.getBytes(&buffer, range: NSMakeRange(offset, iLen32))
+            offset += iLen32
+            let magicNum = convertDigit(buffer)
+
+
+            data.getBytes(&buffer, range: NSMakeRange(offset, iLen32))
+            offset += iLen32
+            let imgNum = convertDigit(buffer)
+
+
+            for i in iInstances
+            {
+                var label = UInt8()
+                data.getBytes(&label, range: NSMakeRange(offset, iLen8))
+                i.iLabel = Int(label)
+                offset += iLen8;
+            }
+            print("error: \(error)")
+        }
+    }
+}
+
+class MnistInstance
+{
+    var iImage = [UInt8]()
+    var iLabel = -1
+    var iHeight = 0
+    var iWidth = 0
+
+    func getArea() -> Int
+    {
+        return iHeight * iWidth
+    }
+
+    func printImage()
+    {
+        print("Label: \(iLabel)")
+        for (var r = 0; r < iHeight; ++r)
+        {
+            for (var c = 0; c < iWidth; ++c)
+            {
+                let s = iImage[r * iWidth + c] > 0 ? "*" : " "
+                print(" \(s)", terminator: "")
+            }
+            print("")
+        }
+        print("----------------------------------------------")
+    }
+
+    func copyImageToNNInput(aNNInputLen:Int, aNNInputArea:Int) -> [Float]
+    {
+        // 1 is white, -1 is black
+        var nnInput = [Float](count: aNNInputArea, repeatedValue: -1.0)
+
+        for (var ii = 0; ii < iHeight; ++ii)
+        {
+            for (var jj = 0; jj < iWidth; ++jj)
+            {
+                let v = (Float)(iImage[ jj + iWidth*ii ])/128.0 - 1.0
+                //print(v)
+                nnInput[ (1 + jj) + aNNInputLen * (ii + 1) ] = v;
+            }
+        }
+
+        //
+//        for (var r = 0; r < iHeight; ++r)
+//        {
+//            for (var c = 0; c < iWidth; ++c)
+//            {
+//                let s = nnInput[r * iWidth + c] > 0 ? "x" : " "
+//                print(" \(s)", terminator: "")
+//            }
+//            print("")
+//        }
+//        print("----------------------------------------------")
+
+        return nnInput
     }
 }
