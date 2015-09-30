@@ -10,6 +10,13 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    // learning rate
+    let eta:Double = 0.02
+    let trainCases = 50
+    let testCases = 1000
+    let iterations = 2
+    let loop = 4
+
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -18,29 +25,17 @@ class ViewController: UIViewController {
 
         print("Minist reading==============================")
         let mnist = Mnist()
-        mnist.read(20)
+        mnist.read(trainCases, aTestCount: testCases)
 
 
         print("NN init==============================")
         let rhwd = RecognizeDigits()
         rhwd.initNN()
 
-        // learning rate
-        let eta:Double = 0.02
-        let iterations = 2
-        let trainCount = 50
-        
-
-        for (var t = 0; t < 4; ++t)
+        for (var l = 0; l < loop; ++l)
         {
-            var c = 0
-            for ins in mnist.iInstances
+            for ins in mnist.iTrainInstances
             {
-                if (c++ >= trainCount)
-                {
-                    break
-                }
-                
                 let nnInput:[Double] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
 
                 // 10 outpus for 0 ~ 9
@@ -70,7 +65,7 @@ class ViewController: UIViewController {
 
 
         var penalty = 0
-        for ins in mnist.iInstances
+        for ins in mnist.iTestInstances
         {
             // *
             // * NO INPUT
@@ -84,7 +79,7 @@ class ViewController: UIViewController {
         }
 
         print("Done==============================")
-        print("Penalty: \(penalty) / \(mnist.iInstances.count)")
+        print("Penalty: \(penalty) / \(mnist.iTestInstances.count)")
 
     }
 
@@ -98,7 +93,7 @@ class ViewController: UIViewController {
         var idx = 0
         for n in aOutput
         {
-            print("\(idx++): \(n + 2)")
+            print("\(idx++): \(n)")
         }
     }
     

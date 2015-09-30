@@ -17,23 +17,22 @@ class Mnist
     let iLen32 = sizeof(UInt32)
     let iLen8  = sizeof(UInt8)
 
-    var iInstances = [MnistInstance]()
-
+    var iTrainInstances = [MnistInstance]()
+    var iTestInstances = [MnistInstance]()
+    
     init ()
     {
         p16_2 = p16_1 * p16_1
         p16_3 = p16_2 * p16_1
     }
 
-    func read(aTestCount:Int)
+    func read(aTrainCount:Int, aTestCount:Int)
     {
-        readTrainImages(aTestCount)
-        readTrainLabels()
+        readImages(aTrainCount, aFile: "MNIST/train-images-idx3-ubyte", aInstances: &iTrainInstances)
+        readLabels("MNIST/train-labels-idx1-ubyte", aInstances: &iTrainInstances)
 
-        for i:MnistInstance in iInstances
-        {
-            i.printImage()
-        }
+        readImages(aTestCount, aFile: "MNIST/t10k-images-idx3-ubyte", aInstances: &iTestInstances)
+        readLabels("MNIST/t10k-labels-idx1-ubyte", aInstances: &iTestInstances)
     }
     
     func convertDigit(array:[UInt8])->Int
@@ -41,9 +40,8 @@ class Mnist
         return Int(UInt32(array[0]) * p16_3 + UInt32(array[1]) * p16_2 + UInt32(array[2]) * p16_1 + UInt32(array[3]))
     }
     
-    func readTrainImages(aTestCount:Int)
+    func readImages(aCount:Int, aFile:String, inout aInstances:[MnistInstance])
     {
-        let trainImgFile   = "MNIST/train-images-idx3-ubyte"
         
         //        TRAINING SET IMAGE FILE (train-images-idx3-ubyte):
         //
@@ -57,7 +55,7 @@ class Mnist
         //        ........
         //        xxxx     unsigned byte   ??               pixel
         
-        if let path = NSBundle.mainBundle().pathForResource(trainImgFile, ofType:"") {
+        if let path = NSBundle.mainBundle().pathForResource(aFile, ofType:"") {
             var error:NSError?
             //            let s = String(contentsOfFile: path, encoding: NSUTF8StringEncoding, error: &error)
             let data = NSData(contentsOfFile: path)!
@@ -82,7 +80,7 @@ class Mnist
             offset += iLen32
             let colNum = convertDigit(buffer)
 
-            for (var i = 0; i < aTestCount; ++i)
+            for (var i = 0; i < aCount; ++i)
             {
                 let ins = MnistInstance()
 
@@ -95,14 +93,14 @@ class Mnist
                 data.getBytes(&(ins.iImage), range: NSMakeRange(offset, bytes))
                 offset += bytes;
 
-                iInstances.append(ins)
+                aInstances.append(ins)
             }
 
             print("error: \(error)")
         }
     }
 
-    func readTrainLabels()
+    func readLabels(aFile:String, inout aInstances:[MnistInstance])
     {
         let trainLabelFile = "MNIST/train-labels-idx1-ubyte"
 //        [offset] [type]          [value]          [description]
@@ -113,7 +111,7 @@ class Mnist
 //            ........
 //            xxxx     unsigned byte   ??               label
 
-        if let path = NSBundle.mainBundle().pathForResource(trainLabelFile, ofType:"") {
+        if let path = NSBundle.mainBundle().pathForResource(aFile, ofType:"") {
             var error:NSError?
             //            let s = String(contentsOfFile: path, encoding: NSUTF8StringEncoding, error: &error)
             let data = NSData(contentsOfFile: path)!
@@ -131,7 +129,7 @@ class Mnist
             let imgNum = convertDigit(buffer)
 
 
-            for i in iInstances
+            for i in aInstances
             {
                 var label = UInt8()
                 data.getBytes(&label, range: NSMakeRange(offset, iLen8))
@@ -184,18 +182,6 @@ class MnistInstance
                 nnInput[ (1 + jj) + aNNInputLen * (ii + 1) ] = v;
             }
         }
-
-        //
-//        for (var r = 0; r < iHeight; ++r)
-//        {
-//            for (var c = 0; c < iWidth; ++c)
-//            {
-//                let s = nnInput[r * iWidth + c] > 0 ? "x" : " "
-//                print(" \(s)", terminator: "")
-//            }
-//            print("")
-//        }
-//        print("----------------------------------------------")
 
         return nnInput
     }
