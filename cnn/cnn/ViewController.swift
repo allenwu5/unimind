@@ -10,18 +10,22 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    let useCache = false
+    
     // learning rate
-    let eta:Double = 0.02
-    let trainCases = 50
-    let testCases = 1000
-    let iterations = 2
-    let loop = 4
+    let eta:Double = 0.01
+    let trainCases = 1 // 60000
+    let testCases = 1 // 10000
+
+    let epochs = 1 // 10 ~ 20
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        
         // Do any additional setup after loading the view, typically from a nib.
 
-        print("Start==============================")
+        print("Start============================== \(NSDate())")
 
         print("Minist reading==============================")
         let mnist = Mnist()
@@ -32,8 +36,9 @@ class ViewController: UIViewController {
         let rhwd = RecognizeDigits()
         rhwd.initNN()
 
-        for (var l = 0; l < loop; ++l)
+        for (var l = 0; !useCache && l < epochs; ++l)
         {
+            var penalty = 0
             for ins in mnist.iTrainInstances
             {
                 let nnInput:[Double] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
@@ -43,28 +48,48 @@ class ViewController: UIViewController {
                 var desiredOutput = [Double](count: 10, repeatedValue: -1)
                 desiredOutput[ins.iLabel] = 1
 
-                print("NN Iteration for label: \(ins.iLabel)==============================")
+                //print("NN Iteration for label: \(ins.iLabel)==============================")
 
-                for (var i = 0; i < iterations; ++i)
+                if (true)
                 {
-                    print(">", terminator:" ")
+                    //print(">", terminator:" ")
                     let output = rhwd.NN.forward(nnInput)
-
-                    print("<", terminator:" ")
-                    rhwd.NN.backPropagate(output, desiredOutput: desiredOutput, eta: eta)
-
-                    printOutputIndex(output)
-
+                    let outputLabel = getOutputLabel(output)
+                    //print(getOutputLabel(output))
+                    
+                    penalty += ins.iLabel == outputLabel ? 0 : 1
+                    
+                    if (outputLabel != ins.iLabel)
+                    {
+                        //print("<", terminator:" ")
+                        rhwd.NN.backPropagate(output, desiredOutput: desiredOutput, eta: eta)
+                    }
                 }
-                print("")
-
+                //print("")
+            }
+            
+            print("Epoch \(l + 1) done \(NSDate())")
+            
+            if (penalty == 0)
+            {
+                break
             }
         }
 
-        print("NN Recall==============================")
+        if (useCache)
+        {
+            rhwd.NN.loadFromFile()
+        }
+        else
+        {
+            rhwd.NN.saveToFile()
+        }
+        
+        print("NN Recall============================== \(NSDate())")
 
 
         var penalty = 0
+        var total = 0
         for ins in mnist.iTestInstances
         {
             // *
@@ -74,12 +99,14 @@ class ViewController: UIViewController {
 
             print("NN FW for label: \(ins.iLabel)==============================")
             let output = rhwd.NN.forward(nnInput)
-            let result = printOutputIndex(output)
-            penalty += ins.iLabel == result ? 0 : 1
+            let currentLabel = getOutputLabel(output)
+            print(currentLabel)
+            penalty += ins.iLabel == currentLabel ? 0 : 1
+            ++total
         }
 
-        print("Done==============================")
-        print("Penalty: \(penalty) / \(mnist.iTestInstances.count)")
+        print("Done============================== \(NSDate())")
+        print("Penalty: \(penalty) / \(total)")
 
     }
 
@@ -88,7 +115,7 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func printOutput(aOutput:[Double])
+    final func printOutput(aOutput:[Double])
     {
         var idx = 0
         for n in aOutput
@@ -97,7 +124,7 @@ class ViewController: UIViewController {
         }
     }
     
-    func printOutputIndex(aOutput:[Double]) -> Int
+    final func getOutputLabel(aOutput:[Double]) -> Int
     {
         var idx = -1
         var max:Double = 0.0
@@ -109,7 +136,6 @@ class ViewController: UIViewController {
                 max = aOutput[i]
             }
         }
-        print("index: \(idx)")
         return idx
     }
 }

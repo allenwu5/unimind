@@ -11,7 +11,7 @@ import Foundation
 
 class RecognizeDigits
 {
-    let ULONG_MAX:Int = 4294967295
+    let ULONG_MAX:Int = 65535
     let iInputLen = 29
     let iInputArea:Int
 

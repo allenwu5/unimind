@@ -148,12 +148,12 @@ class MnistInstance
     var iHeight = 0
     var iWidth = 0
 
-    func getArea() -> Int
+    final func getArea() -> Int
     {
         return iHeight * iWidth
     }
 
-    func printImage()
+    final func printImage()
     {
         print("Label: \(iLabel)")
         for (var r = 0; r < iHeight; ++r)
@@ -168,7 +168,7 @@ class MnistInstance
         print("----------------------------------------------")
     }
 
-    func copyImageToNNInput(aNNInputLen:Int, aNNInputArea:Int) -> [Double]
+    final func copyImageToNNInput(aNNInputLen:Int, aNNInputArea:Int) -> [Double]
     {
         // 1 is white, -1 is black
         var nnInput = [Double](count: aNNInputArea, repeatedValue: -1.0)

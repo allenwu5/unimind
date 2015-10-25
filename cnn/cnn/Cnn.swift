@@ -7,16 +7,17 @@
 //
 
 import Foundation
+import ObjectMapper
+
+let dSigmoidFactor = 0.66666667 / 1.7159
 
 func sigmoid(f: Double) -> Double
 {
-    let s:Double = 1.7159*tanh(0.66666667*f)
-    return s
+    return 1.7159 * tanh(0.66666667 * f)
 }
 func dSigmoid(f: Double) -> Double
 {
-    let s = 0.66666667/1.7159*(1.7159+(f))*(1.7159-(f))
-    return s
+    return dSigmoidFactor * (1.7159 + f ) * (1.7159 - f)
 }
 
 // Neural Network class
@@ -24,9 +25,10 @@ func dSigmoid(f: Double) -> Double
 class NeuralNetwork
 {
     var layers = [Layer]()
+    let iArchive = "Cache/neuralNetworkArchive"
 
     // Think with known weights
-    func forward(input:[Double]) -> [Double]
+    final func forward(input:[Double]) -> [Double]
     {
         let firstLayer = layers.first!
 
@@ -55,7 +57,7 @@ class NeuralNetwork
     }
     
     // Training weights
-    func backPropagate(actualOutput:[Double], desiredOutput:[Double], eta:Double)
+    final func backPropagate(actualOutput:[Double], desiredOutput:[Double], eta:Double)
     {
         // Xnm1 means Xn-1
         
@@ -113,8 +115,6 @@ class NeuralNetwork
 //        differentials[ differentials.count-1 ] = dErr_wrt_dXlast  // last one
 
         
-
-        
         // now iterate through all layers including
         // the last but excluding the first, and ask each of
         // them to backpropagate error and adjust
@@ -132,21 +132,36 @@ class NeuralNetwork
         {
             dSum += d
         }
-//        print("dSum = \(dSum)")
+    }
+    
+    func saveToFile()
+    {
+        print("func saveToFile()")
+
+        for n in layers
+        {
+            let s = Mapper().toJSONString(n, prettyPrint: false)!
+            print(s)
+        }
+    }
+    
+    func loadFromFile()
+    {
+        
     }
 }
 
 
 // Layer class
 
-class Layer
+class Layer : Mappable
 {
     var prev:Layer!
     var neurons = [Neuron]()
     var weights = [Weight]()
-    let ULONG_MAX:Int = 4294967295
-    let label:String
-    
+    let ULONG_MAX:Int = 65535
+    var label:String = ""
+
     init(label:String)
     {
         self.label = label
@@ -158,7 +173,18 @@ class Layer
         self.prev = prev
     }
     
-    func forward() {
+    required init?(_ map: Map){
+        
+    }
+    
+    // Mappable
+    func mapping(map: Map) {
+        label      <- map["label"]
+        neurons    <- map["n"]
+        weights    <- map["w"]
+    }
+    
+    final func forward() {
         //print(label)
         assert(prev.neurons.count > 0, "Previous layer must has neurons !")
         assert(prev.label != label)
@@ -195,12 +221,12 @@ class Layer
         }
     }
     
-    func backPropagate(dErr_wrt_dXn:[Double], inout dErr_wrt_dXnm1:[Double], eta:Double)
+    final func backPropagate(dErr_wrt_dXn:[Double], inout dErr_wrt_dXnm1:[Double], eta:Double)
     {
         var dErr_wrt_dYn = [Double]()
         // calculate equation (3): dErr_wrt_dYn = F'(Yn) * dErr_wrt_Xn
-        var ii:Int
-        for ( ii=0; ii<neurons.count; ++ii )
+
+        for (var ii = 0; ii < neurons.count; ++ii)
         {
             let output = neurons[ ii ].value
             dErr_wrt_dYn.append(dSigmoid( output ) * dErr_wrt_dXn[ ii ])
@@ -213,27 +239,25 @@ class Layer
         
         var dErr_wrt_dWn = [Double](count: weights.count, repeatedValue: 0.0)
         
-        ii = 0
+        var ii = 0
         for n in neurons
         {
-//            NNNeuron& n = *(*nit);  // for simplifying the terminology
+            // for simplifying the terminology
 
             for c in n.connections
             {
-//                kk = (*cit).NeuronIndex;
-                
-                var output:Double
+                var x:Double
                 let nIdx = c.neuronIndex
                 if ( nIdx == ULONG_MAX )
                 {
-                    output = 1.0  // this is the bias weight
+                    x = 1.0  // this is the bias weight
                 }
                 else
                 {
-                    output = prev.neurons[nIdx].value
+                    x = prev.neurons[nIdx].value
                 }
                 
-                dErr_wrt_dWn[ c.weightIndex ] += dErr_wrt_dYn[ ii ] * output
+                dErr_wrt_dWn[ c.weightIndex ] += dErr_wrt_dYn[ ii ] * x
             }
             
             ++ii
@@ -247,12 +271,10 @@ class Layer
         ii = 0
         for n in neurons
         {
-//            NNNeuron& n = *(*nit);  // for simplifying the terminology
+            // for simplifying the terminology
             
             for c in n.connections
             {
-//                kk=(*cit).NeuronIndex;
-//                if ( kk != ULONG_MAX )
                 let nIdx = c.neuronIndex
                 if ( nIdx != ULONG_MAX )
                 {
@@ -269,13 +291,6 @@ class Layer
             
             ii++  // ii tracks the neuron iterator
         }
-//
-//        var dErr_wrt_dXnm1_sum:Double = 0.0
-//        for v in dErr_wrt_dXnm1
-//        {
-//            dErr_wrt_dXnm1_sum += v
-//        }
-//        print("dErr_wrt_dXnm1_sum \(dErr_wrt_dXnm1_sum)")
         
         // calculate equation (6): update the weights
         // in this layer using dErr_wrt_dW (from
@@ -298,10 +313,12 @@ class Layer
 
 // Neuron class
 
-class Neuron
+class Neuron: Mappable
 {
     var label:String = ""
     var value:Double = 0.0
+    var connections = [Connection]()
+    
     init()
     {
     }
@@ -313,40 +330,66 @@ class Neuron
     {
         self.label = label
     }
-    var connections = [Connection]()
     
     func AddConnection(neuronIndex:Int, weightIndex:Int)
     {
         connections.append(Connection(neuronIndex: neuronIndex, weightIndex: weightIndex))
+    }
+    
+    required init?(_ map: Map){
+        
+    }
+    
+    // Mappable
+    func mapping(map: Map) {
+        label    <- map["label"]
+        value    <- map["v"]
+        connections    <- map["connections"]
     }
 }
 
 
 // Connection class
 
-class Connection
+class Connection: Mappable
 {
-    var neuronIndex:Int
-    var weightIndex:Int
+    var neuronIndex:Int = 0
+    var weightIndex:Int = 0
     init(neuronIndex:Int, weightIndex:Int)
     {
         self.neuronIndex = neuronIndex
         self.weightIndex = weightIndex
+    }
+    
+    required init?(_ map: Map){
+        
+    }
+    
+    // Mappable
+    func mapping(map: Map) {
+        neuronIndex    <- map["n"]
+        weightIndex    <- map["w"]
     }
 }
 
 
 // Weight class
 
-class Weight
+class Weight: Mappable
 {
-    var value:Double
-    init()
-    {
-        self.value = 0.0
-    }
+    var value:Double  = 0.0
+
     init(value:Double)
     {
         self.value = value
+    }
+    
+    required init?(_ map: Map){
+        
+    }
+    
+    // Mappable
+    func mapping(map: Map) {
+        value    <- map["v"]
     }
 }
