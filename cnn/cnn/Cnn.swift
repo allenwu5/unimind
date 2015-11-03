@@ -22,11 +22,25 @@ func dSigmoid(f: Double) -> Double
 
 // Neural Network class
 
-class NeuralNetwork
+class NeuralNetwork : Mappable
 {
     var layers = [Layer]()
     let iArchive = "Cache/neuralNetworkArchive"
 
+    init()
+    {
+        
+    }
+    
+    required init?(_ map: Map){
+        
+    }
+    
+    // Mappable
+    func mapping(map: Map) {
+        layers      <- map["layers"]
+    }
+    
     // Think with known weights
     final func forward(input:[Double]) -> [Double]
     {
@@ -138,16 +152,48 @@ class NeuralNetwork
     {
         print("func saveToFile()")
 
-        for n in layers
-        {
-            let s = Mapper().toJSONString(n, prettyPrint: false)!
-            print(s)
+        let s = Mapper().toJSONString(self, prettyPrint: false)!
+        // Takes long time to print out, write to file is faster
+        
+        let destinationPath = NSTemporaryDirectory() + "cnn.json"
+        
+        do {
+            print("DestinationPath: \(destinationPath)")
+            try s.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
+        } catch let error as NSError {
+            print(error)
         }
     }
     
     func loadFromFile()
     {
+        print("func loadFromFile()")
+
+        let destinationPath = NSTemporaryDirectory() + "cnn.json"
         
+        do {
+            print("DestinationPath: \(destinationPath)")
+            let s = try NSString(contentsOfFile: destinationPath, encoding: NSUTF8StringEncoding) as String
+            if let nn:NeuralNetwork = Mapper<NeuralNetwork>().map(s)
+            {
+                print("Load \(nn.layers.count) layers from file")
+                print("Connect layers")
+                for (var i = 0; i < nn.layers.count - 1; ++i)
+                {
+                    nn.layers[i + 1].prev = nn.layers[i]
+                }
+                
+                self.layers = nn.layers
+                print("Load layers done")
+            }
+            else
+            {
+                print("nn is null")
+            }
+            
+        } catch let error as NSError {
+            print(error)
+        }
     }
 }
 

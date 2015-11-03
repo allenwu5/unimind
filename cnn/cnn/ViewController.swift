@@ -10,14 +10,14 @@ import UIKit
 
 class ViewController: UIViewController {
 
-    let useCache = false
+    let useCache = true
     
     // learning rate
     let eta:Double = 0.01
-    let trainCases = 1 // 60000
-    let testCases = 1 // 10000
+    let trainCases = 6000 // 60000
+    let testCases = 1000 // 10000
 
-    let epochs = 1 // 10 ~ 20
+    let epochs = 20 // 10 ~ 20
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -48,7 +48,7 @@ class ViewController: UIViewController {
                 var desiredOutput = [Double](count: 10, repeatedValue: -1)
                 desiredOutput[ins.iLabel] = 1
 
-                //print("NN Iteration for label: \(ins.iLabel)==============================")
+                print("NN Iteration for label: \(ins.iLabel)==============================")
 
                 if (true)
                 {
