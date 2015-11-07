@@ -67,12 +67,14 @@ class ViewController: UIViewController,
 
         
         // 3 render
-        var pipelineError : NSError?
 
         let kernel = defaultLibrary!.newFunctionWithName(mode)
-        pipelineState = device.newComputePipelineStateWithFunction(kernel!, error: &pipelineError)
-        if pipelineState == nil {
-            println("Failed to create pipeline state, error \(pipelineError)")
+        
+        do
+        {
+            try pipelineState = device.newComputePipelineStateWithFunction(kernel!)
+        } catch let error as NSError {
+            print(error)
         }
         
         // Command
@@ -96,9 +98,9 @@ class ViewController: UIViewController,
         
         var rawData = [UInt8](count: Int(imageWidth * imageHeight * 4), repeatedValue: 0)
         
-        let bitmapInfo = CGBitmapInfo(CGBitmapInfo.ByteOrder32Big.rawValue | CGImageAlphaInfo.PremultipliedLast.rawValue)
+        let bitmapInfo = CGBitmapInfo(rawValue: CGBitmapInfo.ByteOrder32Big.rawValue | CGImageAlphaInfo.PremultipliedLast.rawValue)
         
-        let context = CGBitmapContextCreate(&rawData, imageWidth, imageHeight, bitsPerComponent, bytesPerRow, rgbColorSpace, bitmapInfo)
+        let context = CGBitmapContextCreate(&rawData, imageWidth, imageHeight, bitsPerComponent, bytesPerRow, rgbColorSpace, bitmapInfo.rawValue)
         
         CGContextDrawImage(context, CGRectMake(0, 0, CGFloat(imageWidth), CGFloat(imageHeight)), imageRef)
         // 2.
@@ -122,7 +124,7 @@ class ViewController: UIViewController,
         if (mode == "sat")
         {
             var saturationFactor = AdjustSaturationUniforms(saturationFactor: self.saturationFactor)
-            let buffer: MTLBuffer = device.newBufferWithBytes(&saturationFactor, length: sizeof(AdjustSaturationUniforms), options: nil)
+            let buffer: MTLBuffer = device.newBufferWithBytes(&saturationFactor, length: sizeof(AdjustSaturationUniforms), options: [])
             commandEncoder.setBuffer(buffer, offset: 0, atIndex: 0)
         }
         else if (mode == "blur")
@@ -164,14 +166,14 @@ class ViewController: UIViewController,
                 NSData(bytes: &imageBytes, length: imageBytes.count * sizeof(UInt8))
             )
             
-            let bitmapInfo = CGBitmapInfo(CGBitmapInfo.ByteOrder32Big.rawValue | CGImageAlphaInfo.PremultipliedLast.rawValue)
-            let renderingIntent = kCGRenderingIntentDefault
+            let bitmapInfo = CGBitmapInfo(rawValue: CGBitmapInfo.ByteOrder32Big.rawValue | CGImageAlphaInfo.PremultipliedLast.rawValue)
+            let renderingIntent = CGColorRenderingIntent.RenderingIntentDefault
         
             let imageRef = CGImageCreate(Int(imageSize.width), Int(imageSize.height), bitsPerComponent, bitsPerPixel, Int(bytesPerRow), rgbColorSpace, bitmapInfo, providerRef, nil, false, renderingIntent)
             
             imageView = UIImageView(frame: view.bounds)
             imageView.contentMode = .ScaleAspectFit
-            imageView.image = UIImage(CGImage: imageRef)
+            imageView.image = UIImage(CGImage: imageRef!)
             imageView.center = view.center
             view.addSubview(imageView)
         }
@@ -198,7 +200,7 @@ class ViewController: UIViewController,
             if let theController = controller{
                 theController.sourceType = .Camera
                 
-                theController.mediaTypes = [kUTTypeImage as! String]
+                theController.mediaTypes = [kUTTypeImage as String]
                 
                 theController.allowsEditing = false
                 theController.delegate = self
@@ -207,7 +209,7 @@ class ViewController: UIViewController,
             }
             
         } else {
-            println("Camera is not available ...")
+            print("Camera is not available ...")
         }
         
     }
@@ -220,9 +222,9 @@ class ViewController: UIViewController,
     }
     
     func imagePickerController(picker: UIImagePickerController,
-        didFinishPickingMediaWithInfo info: [NSObject : AnyObject]){
+        didFinishPickingMediaWithInfo info: [String : AnyObject]){
             
-            println("Picker returned successfully")
+            print("Picker returned successfully")
             
             let mediaType:AnyObject? = info[UIImagePickerControllerMediaType]
             
@@ -231,14 +233,14 @@ class ViewController: UIViewController,
                 if type is String{
                     let stringType = type as! String
                     
-                    if stringType == kUTTypeMovie as! String{
+                    if stringType == kUTTypeMovie as String{
                         let urlOfVideo = info[UIImagePickerControllerMediaURL] as? NSURL
                         if let url = urlOfVideo{
-                            println("Video URL = \(url)")
+                            print("Video URL = \(url)")
                         }
                     }
                         
-                    else if stringType == kUTTypeImage as! String{
+                    else if stringType == kUTTypeImage as String{
                         /* Let's get the metadata. This is only for images. Not videos */
                         let metadata = info[UIImagePickerControllerMediaMetadata]
                             as? NSDictionary
@@ -246,13 +248,13 @@ class ViewController: UIViewController,
                             let image = info[UIImagePickerControllerOriginalImage]
                                 as? UIImage
                             if let theImage = image{
-                                println("Image Metadata = \(theMetaData)")
-                                println("Image = \(theImage)")
+                                print("Image Metadata = \(theMetaData)")
+                                print("Image = \(theImage)")
                                 
                                 // You've get the image
                                 
                                 self.render(theImage)
-                                println("Rendered via Metal")
+                                print("Rendered via Metal")
 
                                 
                             }
@@ -270,7 +272,7 @@ class ViewController: UIViewController,
     }
     
     func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        println("Picker was cancelled")
+        print("Picker was cancelled")
         picker.dismissViewControllerAnimated(true, completion: nil)
     }
     
@@ -282,8 +284,7 @@ class ViewController: UIViewController,
         sourceType: UIImagePickerControllerSourceType) -> Bool{
             
             let availableMediaTypes =
-            UIImagePickerController.availableMediaTypesForSourceType(sourceType) as!
-                [String]?
+            UIImagePickerController.availableMediaTypesForSourceType(sourceType) 
             
             if let types = availableMediaTypes{
                 for type in types{
@@ -297,7 +298,7 @@ class ViewController: UIViewController,
     }
     
     func doesCameraSupportTakingPhotos() -> Bool{
-        return cameraSupportsMedia(kUTTypeImage as! String, sourceType: .Camera)
+        return cameraSupportsMedia(kUTTypeImage as String, sourceType: .Camera)
     }
     
     func generateBlurWeightTexture() -> MTLTexture
@@ -325,7 +326,7 @@ class ViewController: UIViewController,
             
             for (var i = 0; i < size; ++i)
             {
-                var weight = exp(Float(x * x + y * y) * expScale);
+                let weight = exp(Float(x * x + y * y) * expScale);
                 weights[j * size + i] = weight;
                 weightSum += weight;
                 x += delta

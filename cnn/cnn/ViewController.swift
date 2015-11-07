@@ -97,11 +97,18 @@ class ViewController: UIViewController {
             // *
             let nnInput:[Double] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
 
-            print("NN FW for label: \(ins.iLabel)==============================")
+            
             let output = rhwd.NN.forward(nnInput)
-            let currentLabel = getOutputLabel(output)
-            print(currentLabel)
-            penalty += ins.iLabel == currentLabel ? 0 : 1
+            let outputLabel = getOutputLabel(output)
+            
+            if (ins.iLabel != outputLabel)
+            {
+                print("NN FW for label: \(ins.iLabel)==============================")
+                print(outputLabel)
+
+                ++penalty
+                ins.printImage()
+            }
             ++total
         }
 
