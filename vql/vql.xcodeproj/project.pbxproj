@@ -14,6 +14,8 @@
 		BF2B3BD81B80A12900137E31 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BF174CDE1AD1AC2F00C3B695 /* Main.storyboard */; };
 		BF3418F51AD94CC200E3649F /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BF3418F41AD94CC200E3649F /* Default-568h@2x.png */; };
 		BF9C60D41AC70E5A00F6BF64 /* vqlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9C60D31AC70E5A00F6BF64 /* vqlTests.swift */; };
+		BFBAFB011BEEF71D00430223 /* Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBAFB001BEEF71D00430223 /* Camera.swift */; };
+		BFBAFB031BEEFA5A00430223 /* Metal.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBAFB021BEEFA5A00430223 /* Metal.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +40,8 @@
 		BF9C60CD1AC70E5A00F6BF64 /* vqlTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vqlTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF9C60D21AC70E5A00F6BF64 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BF9C60D31AC70E5A00F6BF64 /* vqlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = vqlTests.swift; sourceTree = "<group>"; };
+		BFBAFB001BEEF71D00430223 /* Camera.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Camera.swift; sourceTree = "<group>"; };
+		BFBAFB021BEEFA5A00430223 /* Metal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Metal.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +90,8 @@
 				BF174CEC1AD1AD1C00C3B695 /* ViewController.swift */,
 				BF174CC61AD1A14A00C3B695 /* Shaders.metal */,
 				BF6EA22E1AD98D6500A8BBBB /* vql-Bridging-Header.h */,
+				BFBAFB001BEEF71D00430223 /* Camera.swift */,
+				BFBAFB021BEEFA5A00430223 /* Metal.swift */,
 			);
 			path = vql;
 			sourceTree = "<group>";
@@ -210,7 +216,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BFBAFB011BEEF71D00430223 /* Camera.swift in Sources */,
 				BF174CED1AD1AD1C00C3B695 /* ViewController.swift in Sources */,
+				BFBAFB031BEEFA5A00430223 /* Metal.swift in Sources */,
 				BF174CE31AD1AC2F00C3B695 /* AppDelegate.swift in Sources */,
 				BF174CC71AD1A14A00C3B695 /* Shaders.metal in Sources */,
 			);
@@ -310,6 +318,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_INSTALL_OBJC_HEADER = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
