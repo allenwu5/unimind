@@ -83,14 +83,15 @@ class RecognizeDigits
         // We move the kernel by TWO pixels, i.e., we
         // skip every other pixel in the input image
         
-        let kernelTemplate:[Int] = [
-            0,  1,  2,  3,  4,
-            29, 30, 31, 32, 33,
-            58, 59, 60, 61, 62,
-            87, 88, 89, 90, 91,
-            116,117,118,119,120 ];
         
-
+        var kernelTemplate = [Int]()
+        for (var i = 0; i < kernelSize; ++i)
+        {
+            for (var j = 0; j < kernelSize; ++j)
+            {
+                kernelTemplate.append(i * iInputLen + j)
+            }
+        }
         
 //        int fm;  // "fm" stands for "feature map"
         
@@ -163,16 +164,15 @@ class RecognizeDigits
         // The result is 50 different 5x5 top-down bitmap
         // feature maps
         
-//        let kernelTemplate2:[Int] = [
-//            0,  1,  2,  3,
-//            20, 21, 22, 23,
-//            40, 41, 42, 43,
-//            60, 61, 62, 63   ]
-        let kernelTemplate2:[Int] = [
-            0,  1,  2,  3,
-            12, 13, 14, 15,
-            24, 25, 26, 27,
-            36, 37, 38, 39   ]
+
+        var kernelTemplate2 = [Int]()
+        for (var i = 0; i < kernelSize; ++i)
+        {
+            for (var j = 0; j < kernelSize; ++j)
+            {
+                kernelTemplate2.append(i * featMapSize + j)
+            }
+        }
         
         var maxNeuronIndex = 0
         for (var fm=0; fm<l2FeatMapCount; ++fm)
