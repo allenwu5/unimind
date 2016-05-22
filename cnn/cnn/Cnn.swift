@@ -8,6 +8,7 @@
 
 import Foundation
 import ObjectMapper
+import SwiftyJSON
 
 let dSigmoidFactor = 0.66666667 / 1.7159
 
@@ -52,11 +53,13 @@ class NeuralNetwork : Mappable
         {
             firstLayer.neurons[i].value = input[i]
         }
+        firstLayer.debugPrint()
         
         // forward layer by layer
         for(var i = 1; i < layers.count; ++i)
         {
             layers[i].forward()
+            layers[i].debugPrint()
         }
 
         let lastLayer = layers.last!
@@ -165,7 +168,7 @@ class NeuralNetwork : Mappable
         }
     }
     
-    func loadFromFile()
+    func loadFromFile() -> Bool
     {
         print("func loadFromFile()")
 
@@ -177,29 +180,298 @@ class NeuralNetwork : Mappable
             if let nn:NeuralNetwork = Mapper<NeuralNetwork>().map(s)
             {
                 print("Load \(nn.layers.count) layers from file")
-                print("Connect layers")
-                for (var i = 0; i < nn.layers.count - 1; ++i)
+                
+                for (var i = 0; i < nn.layers.count; ++i)
                 {
-                    nn.layers[i + 1].prev = nn.layers[i]
+                  self.layers[i].weights = nn.layers[i].weights
                 }
                 
-                self.layers = nn.layers
+                for (var i = 0; i < nn.layers.count; ++i)
+                {
+                    for (var j = 0; j < nn.layers[i].neurons.count; ++j)
+                    {
+                        for (var k = 0; k < nn.layers[i].neurons[j].connections.count; ++k)
+                        {
+                            assert(self.layers[i].neurons[j].connections[k].weightIndex == nn.layers[i].neurons[j].connections[k].weightIndex)
+                            assert(self.layers[i].neurons[j].connections[k].neuronIndex == nn.layers[i].neurons[j].connections[k].neuronIndex)
+
+                            if (self.layers[i].neurons[j].connections[k].neuronIndex != nn.layers[i].neurons[j].connections[k].neuronIndex)
+                            {
+//                                print("\(self.layers[i].neurons[j].connections[k].neuronIndex) != \(nn.layers[i].neurons[j].connections[k].neuronIndex)")
+//                                self.layers[i].neurons[j].connections[k].neuronIndex = nn.layers[i].neurons[j].connections[k].neuronIndex
+                            }
+                        }
+                    }
+                }
+
                 print("Load layers done")
+                return true
             }
-            else
-            {
-                print("nn is null")
-            }
-            
         } catch let error as NSError {
             print(error)
         }
+        return false
+    }
+    
+    func loadFromTheano() -> Bool
+    {
+
+        print("func loadFromTheano()")
+        
+        let dir = NSTemporaryDirectory()
+        
+        // weight0.json ~ weight7.json
+        var weightJsonStrings = [String]()
+        let weightFileCount = 8
+        for (var i = 0; i < weightFileCount; ++i)
+        {
+            let destinationPath = dir + "weight" + String(i) + ".json"
+            do {
+                print("DestinationPath: \(destinationPath)")
+                let s = try NSString(contentsOfFile: destinationPath, encoding: NSUTF8StringEncoding) as String
+                weightJsonStrings.append(s)
+            } catch let error as NSError {
+                print(error)
+                return false
+            }
+        }
+        
+        // make sure we can read weights successfully from json strings
+        for l in layers
+        {
+            for w in l.weights
+            {
+                w.value = 0
+            }
+        }
+
+        
+        // layer one:
+        // This layer is a convolutional layer that
+        // has 6 feature maps.  Each feature
+        // map is 13x13, and each unit in the
+        // feature maps is a 5x5 convolutional kernel
+        // of the input layer.
+        // So, there are 13x13x6 = 1014 neurons, (5x5+1)x6 = 156 weights
+        
+        // Note: updated 6 to 20
+        
+        let featMapCount = 20
+        let kernelSize = 5
+        let kernelArea = kernelSize * kernelSize
+        let kernelWeightCount = 1 + kernelArea
+
+        let l1 = layers[1]
+        
+        // w7: 20 bias
+        if let dataFromString = weightJsonStrings[7].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            var shift = 0
+            for (_, subJson) in json {
+                l1.weights[shift].value = subJson.doubleValue
+                shift += kernelWeightCount
+            }
+            assert(shift == l1.weights.count)
+        }
+        
+        // w6: 20 x 1 (one image as input) x ( 1 + 5 x 5)
+        if let dataFromString = weightJsonStrings[6].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+
+            // 1 ~ 20
+            var shift = 0
+            for (_, sj) in json {
+                ++shift // skip bias
+                for (_, sj2) in sj[0] {
+                    for (_, sj3) in sj2 {
+                        l1.weights[shift].value = sj3.doubleValue
+                        ++shift
+                    }
+                }
+            }
+            assert(shift == l1.weights.count)
+        }
+        
+        // layer two:
+        // This layer is a convolutional layer
+        // that has 50 feature maps.  Each feature
+        // map is 5x5, and each unit in the feature
+        // maps is a 5x5 convolutional kernel
+        // of corresponding areas of all 6 of the
+        // previous layers, each of which is a 13x13 feature map
+        // So, there are 5x5x50 = 1250 neurons, (5x5+1)x6x50 = 7800 weights
+        
+        // Note: updated 6 to 20
+        
+        let l2 = layers[2]
+        
+        // w5: 50
+        if let dataFromString = weightJsonStrings[5].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            var shift = 0
+            for (_, subJson) in json {
+                for (var i = 0; i < featMapCount; ++i)
+                {
+                    l2.weights[shift].value = subJson.doubleValue
+                    shift += kernelWeightCount
+                }
+            }
+            assert(shift == l2.weights.count)
+        }
+        
+        // w4: 50 x 20 x ( 1 + 5 x 5) = 26000
+        if let dataFromString = weightJsonStrings[4].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            // 1 ~ 20
+            var shift = 0
+            for (_, sj) in json {
+                for (_, sj2) in sj {
+                    ++shift // skip bias
+                    for (_, sj3) in sj2 {
+                        for (_, sj4) in sj3 {
+                            l2.weights[shift].value = sj4.doubleValue
+                            ++shift
+                        }
+                    }
+                }
+            }
+            assert(shift == l2.weights.count)
+        }
+    
+//        # the HiddenLayer being fully-connected, it operates on 2D matrices of
+//        # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
+//        # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
+//        # or (500, 50 * 4 * 4) = (500, 800) with the default values.
+//        layer2_input = layer1.output.flatten(2)
+        
+        let l3 = layers[3]
+        // weights = 400500 = 500 x (1 + 800)
+        
+        let l2NeuronCount = 50 * 4 * 4
+        // 625500 = 500 x (1250 + 1)
+        // w3: 500
+        
+        let l2NcPlus1 = (1 + l2NeuronCount)
+        // 500 is middle layer of fully-connetced NN
+        let l3WeightCount = 500 * l2NcPlus1
+        
+        if let dataFromString = weightJsonStrings[3].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            var shift = 0
+            for (_, subJson) in json {
+                l3.weights[shift].value = subJson.doubleValue
+                shift += l2NcPlus1
+            }
+            assert(shift == l3.weights.count)
+        }
+        
+        // w2: 800 x 500
+        // !!!!!!!!!!!!!!!!!!!
+        // 
+        // Why order different
+        //
+        // !!!!!!!!!!!!!!!!!!!
+        if let dataFromString = weightJsonStrings[2].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            var ary = [[Double]](count:500, repeatedValue: [Double](count:800, repeatedValue: 0.0))
+            var i800 = 0, i500 = 0
+            for (_, sj) in json {
+                i500 = 0
+                for (_, sj2) in sj {
+                    ary[i500++][i800] = sj2.doubleValue
+                }
+                i800++
+            }
+            
+            assert(i500 == 500)
+            assert(i800 == 800)
+            
+            var shift = 0
+            for (row) in ary {
+                ++shift // skip bias
+                for (value) in row {
+                    l3.weights[shift].value = value
+                    ++shift
+                }
+            }
+            
+            assert(shift == l3.weights.count)
+        }
+        
+        // Finally, mapping to digits 0 ~ 9
+        
+        let l4 = layers[4]
+        // weights = 5010 = 10 x (1 + 500)
+        let l3NeuronCount = 500
+        let l3NcPlus1 = (1 + l3NeuronCount)
+        let l4WeightCount = 10 * l3NcPlus1
+        
+        // w1: 10
+        if let dataFromString = weightJsonStrings[1].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            var shift = 0
+            for (_, subJson) in json {
+                l4.weights[shift].value = subJson.doubleValue
+                shift += l3NcPlus1
+            }
+            assert(shift == l4WeightCount)
+        }
+        
+        // w0: 500 x 10
+        // !!!!!!!!!!!!!!!!!!!
+        //
+        // Why order different
+        //
+        // !!!!!!!!!!!!!!!!!!!
+        if let dataFromString = weightJsonStrings[0].dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)
+        {
+            let json = JSON(data: dataFromString)
+            
+            var ary = [[Double]](count:10, repeatedValue: [Double](count:500, repeatedValue: 0.0))
+            var i500 = 0, i10 = 0
+            for (_, sj) in json {
+                i10 = 0
+                for (_, sj2) in sj {
+                    ary[i10++][i500] = sj2.doubleValue
+                }
+                i500++
+            }
+            
+            assert(i10 == 10)
+            assert(i500 == 500)
+            
+            var shift = 0
+            for (row) in ary {
+                ++shift // skip bias
+                for (value) in row {
+                    l4.weights[shift].value = value
+                    ++shift
+                }
+            }
+            
+            assert(shift == l4WeightCount)
+        }
+        
+        return true
+        
     }
 }
 
 
 // Layer class
-
 class Layer : Mappable
 {
     var prev:Layer!
@@ -231,7 +503,6 @@ class Layer : Mappable
     }
     
     final func forward() {
-        //print(label)
         assert(prev.neurons.count > 0, "Previous layer must has neurons !")
         assert(prev.label != label)
 
@@ -254,7 +525,8 @@ class Layer : Mappable
                 let w = weights[conn.weightIndex].value
 
                 if (w != 0) {
-                    let v = w * prev.neurons[conn.neuronIndex].value
+                    var nv = prev.neurons[conn.neuronIndex].value
+                    let v = w * nv
                     if (v != 0) {
                         sum += v
                     }
@@ -351,7 +623,53 @@ class Layer : Mappable
 
             let newValue = oldValue/*.dd*/ - diff
             
-            weights[ jj ].value = newValue
+            weights[jj].value = newValue
+        }
+    }
+    
+    final func debugPrint()
+    {
+//        printNeurons()
+//        printWeights()
+    }
+    
+    final func printNeurons() {
+        print("func printNeurons()")
+        
+        var s:String = ""
+        for n in neurons
+        {
+            s += " \(n.value)"
+        }
+        // Takes long time to print out, write to file is faster
+        
+        let destinationPath = NSTemporaryDirectory() + label + "_neurons.json"
+        
+        do {
+            print("DestinationPath: \(destinationPath)")
+            try s.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
+        } catch let error as NSError {
+            print(error)
+        }
+    }
+    
+    final func printWeights() {
+        print("func printWeights()")
+        
+        var s:String = ""
+        for n in weights
+        {
+            s += " \(n.value)"
+        }
+        // Takes long time to print out, write to file is faster
+        
+        let destinationPath = NSTemporaryDirectory() + label + "_weights.json"
+        
+        do {
+            print("DestinationPath: \(destinationPath)")
+            try s.writeToFile(destinationPath, atomically: true, encoding: NSUTF8StringEncoding)
+        } catch let error as NSError {
+            print(error)
         }
     }
 }

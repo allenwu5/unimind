@@ -11,17 +11,16 @@ import UIKit
 class ViewController: UIViewController {
 
     let useCache = true
+    let useTheanoWeight = false
     
-    // learning rate
-    let eta:Double = 0.01
-    let trainCases = 6000 // 60000
-    let testCases = 1000 // 10000
 
-    let epochs = 20 // 10 ~ 20
+    let trainCases = 1000 // 60000
+    let testCases = 10 // 10000
+
+    let io = IO()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         
         // Do any additional setup after loading the view, typically from a nib.
 
@@ -31,57 +30,23 @@ class ViewController: UIViewController {
         let mnist = Mnist()
         mnist.read(trainCases, aTestCount: testCases)
 
-
         print("NN init==============================")
         let rhwd = RecognizeDigits()
         rhwd.initNN()
 
-        for (var l = 0; !useCache && l < epochs; ++l)
-        {
-            var penalty = 0
-            for ins in mnist.iTrainInstances
-            {
-                let nnInput:[Double] = ins.copyImageToNNInput(rhwd.iInputLen, aNNInputArea: rhwd.iInputArea)
-
-                // 10 outpus for 0 ~ 9
-
-                var desiredOutput = [Double](count: 10, repeatedValue: -1)
-                desiredOutput[ins.iLabel] = 1
-
-                print("NN Iteration for label: \(ins.iLabel)==============================")
-
-                if (true)
-                {
-                    //print(">", terminator:" ")
-                    let output = rhwd.NN.forward(nnInput)
-                    let outputLabel = getOutputLabel(output)
-                    //print(getOutputLabel(output))
-                    
-                    penalty += ins.iLabel == outputLabel ? 0 : 1
-                    
-                    if (outputLabel != ins.iLabel)
-                    {
-                        //print("<", terminator:" ")
-                        rhwd.NN.backPropagate(output, desiredOutput: desiredOutput, eta: eta)
-                    }
-                }
-                //print("")
-            }
-            
-            print("Epoch \(l + 1) done \(NSDate())")
-            
-            if (penalty == 0)
-            {
-                break
-            }
-        }
-
         if (useCache)
         {
-            rhwd.NN.loadFromFile()
+            let result = (useTheanoWeight && rhwd.NN.loadFromTheano()) || rhwd.NN.loadFromFile()
+            if (!result)
+            {
+                print("Cannot load cache")
+                return;
+            }
         }
         else
-        {
+        {   
+            let train = Train()
+            train.run(mnist, rhwd: rhwd)
             rhwd.NN.saveToFile()
         }
         
@@ -99,16 +64,18 @@ class ViewController: UIViewController {
 
             
             let output = rhwd.NN.forward(nnInput)
-            let outputLabel = getOutputLabel(output)
+            let outputLabel = io.getOutputLabel(output)
             
+            print("NN FW for label: \(ins.iLabel)==============================")
             if (ins.iLabel != outputLabel)
             {
-                print("NN FW for label: \(ins.iLabel)==============================")
+                
                 print(outputLabel)
 
                 ++penalty
-                ins.printImage()
+                
             }
+//            ins.printImage()
             ++total
         }
 
@@ -131,19 +98,6 @@ class ViewController: UIViewController {
         }
     }
     
-    final func getOutputLabel(aOutput:[Double]) -> Int
-    {
-        var idx = -1
-        var max:Double = 0.0
-        for (var i = 0; i < aOutput.count; ++i)
-        {
-            if (idx == -1 || aOutput[i] >= max)
-            {
-                idx = i
-                max = aOutput[i]
-            }
-        }
-        return idx
-    }
+
 }
 

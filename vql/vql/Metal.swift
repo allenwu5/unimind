@@ -69,8 +69,6 @@ class MyMetal
         //        let image = UIImage(named: "grand_canyon.jpg")
         let imageRef = image.CGImage
         
-        
-        
         let imageWidth       = CGImageGetWidth(imageRef)
         let imageHeight      = CGImageGetHeight(imageRef)
         let bytesPerRow = CGImageGetBytesPerRow(imageRef)

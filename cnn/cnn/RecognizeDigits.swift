@@ -48,8 +48,8 @@ class RecognizeDigits
         // feature maps is a 5x5 convolutional kernel
         // of the input layer.
         // So, there are 13x13x6 = 1014 neurons, (5x5+1)x6 = 156 weights
-        let featMapCount = 6
-        let featMapSize = 13
+        let featMapCount = 20
+        let featMapSize = 12
         let featMapArea = featMapSize * featMapSize
         let kernelSize = 5
         let kernelArea = kernelSize * kernelSize
@@ -94,23 +94,26 @@ class RecognizeDigits
         
 //        int fm;  // "fm" stands for "feature map"
         
-        for (var fm=0; fm<featMapCount; ++fm)
+        // 29^2 becomes 20 x 12^2 neurons and 20 x (1 + 5^2) weights
+        for (var fm=0; fm<featMapCount; ++fm)//20
         {
-            for (var ii=0; ii<featMapSize; ++ii )
+            for (var ii=0; ii<featMapSize; ++ii )//12
             {
-                for (var jj=0; jj<featMapSize; ++jj )
+                for (var jj=0; jj<featMapSize; ++jj )//12
                 {
                     // 26 is the number of weights per feature map
                     var iNumWeight:Int = fm * kernelWeightCount;
                     let n = pLayer1.neurons[ jj + ii*featMapSize + fm*featMapArea ]
                     
                     n.AddConnection( ULONG_MAX, weightIndex: iNumWeight++ )  // bias weight
-                    
+                    let move = 2
                     for (var kk=0; kk<kernelArea; ++kk )
                     {
                         // note: max val of index == 840,
                         // corresponding to 841 neurons in prev layer
-                        n.AddConnection( 2 * (jj + iInputLen * ii) + kernelTemplate[kk], weightIndex: iNumWeight++ );
+                        
+                        // convolutino here...
+                        n.AddConnection( move * (jj + iInputLen * ii) + kernelTemplate[kk], weightIndex: iNumWeight++ );
                     }
                 }
             }
@@ -126,7 +129,9 @@ class RecognizeDigits
         // So, there are 5x5x50 = 1250 neurons, (5x5+1)x6x50 = 7800 weights
         
         let l2FeatMapCount = 50
-        let l2NeuronCount = l2FeatMapCount * kernelArea
+        let l2FeatMapSize = 4
+        let l2FeatMapArea = l2FeatMapSize * l2FeatMapSize
+        let l2NeuronCount = l2FeatMapCount * l2FeatMapArea
         let l2WeightCount = kernelWeightCount * featMapCount * l2FeatMapCount
         
         
@@ -158,46 +163,47 @@ class RecognizeDigits
         // The result is 50 different 5x5 top-down bitmap
         // feature maps
         
+//        let kernelTemplate2:[Int] = [
+//            0,  1,  2,  3,
+//            20, 21, 22, 23,
+//            40, 41, 42, 43,
+//            60, 61, 62, 63   ]
         let kernelTemplate2:[Int] = [
-            0,  1,  2,  3,  4,
-            13, 14, 15, 16, 17,
-            26, 27, 28, 29, 30,
-            39, 40, 41, 42, 43,
-            52, 53, 54, 55, 56   ]
+            0,  1,  2,  3,
+            12, 13, 14, 15,
+            24, 25, 26, 27,
+            36, 37, 38, 39   ]
         
-        
+        var maxNeuronIndex = 0
         for (var fm=0; fm<l2FeatMapCount; ++fm)
         {
-            for (var ii=0; ii<kernelSize; ++ii )
+            for (var ii=0; ii<l2FeatMapSize; ++ii )
             {
-                for (var jj=0; jj<kernelSize; ++jj )
+                for (var jj=0; jj<l2FeatMapSize; ++jj )
                 {
                     // 26 is the number of weights per feature map
                     var iNumWeight = fm * kernelWeightCount;
-                    let n:Neuron = pLayer2.neurons[ jj + ii*kernelSize + fm*kernelArea ]
+                    let n:Neuron = pLayer2.neurons[ jj + ii*l2FeatMapSize + fm*l2FeatMapArea ]
                     
                     n.AddConnection( ULONG_MAX, weightIndex: iNumWeight++ )  // bias weight
                     
-                    for (var kk=0; kk<kernelArea; ++kk )
+                    for (var kk=0; kk<l2FeatMapArea; ++kk )
                     {
                         // note: max val of index == 1013,
                         // corresponding to 1014 neurons in prev layer
-                        n.AddConnection(       2*jj + 26*ii +
-                            kernelTemplate2[kk], weightIndex: iNumWeight++ );
-                        n.AddConnection( 169 + 2*jj + 26*ii +
-                            kernelTemplate2[kk], weightIndex: iNumWeight++ );
-                        n.AddConnection( 338 + 2*jj + 26*ii +
-                            kernelTemplate2[kk], weightIndex: iNumWeight++ );
-                        n.AddConnection( 507 + 2*jj + 26*ii +
-                            kernelTemplate2[kk], weightIndex: iNumWeight++ );
-                        n.AddConnection( 676 + 2*jj + 26*ii +
-                            kernelTemplate2[kk], weightIndex: iNumWeight++ );
-                        n.AddConnection( 845 + 2*jj + 26*ii + 
-                            kernelTemplate2[kk], weightIndex: iNumWeight++ );
+                        let move = 2
+                        for (var l = 0; l < featMapCount; ++l)
+                        {
+                            let neuronIndex = (l * featMapArea) + move * (jj + featMapSize * ii) +
+                                kernelTemplate2[kk]
+                            n.AddConnection(neuronIndex , weightIndex: iNumWeight++ );
+                            maxNeuronIndex = max(maxNeuronIndex, neuronIndex)
+                        }
                     }
                 }
             }
         }
+        assert(maxNeuronIndex < neuronCount)
         
         // layer three:
         // This layer is a fully-connected layer
@@ -207,8 +213,8 @@ class RecognizeDigits
         // the previous layer.
         // So, there are 100 neurons and 100*(1250+1)=125100 weights
         
-        let l3NeuronCount = 100
-        let l3WeightCount = l3NeuronCount * (1 + l2NeuronCount)
+        let l3NeuronCount = 500
+        let l3WeightCount = l3NeuronCount * (1 + l2NeuronCount) // 500 * (1 + 50 * 4 ^ 2)
         
         let pLayer3 = Layer(label: "Layer03", prev: pLayer2 )
         NN.layers.append( pLayer3 )
@@ -233,7 +239,7 @@ class RecognizeDigits
             let n:Neuron = pLayer3.neurons[ fm ]
             n.AddConnection( ULONG_MAX, weightIndex: iNumWeight++ );  // bias weight
             
-            for (var ii=0; ii<l2NeuronCount; ++ii )
+            for (var ii=0; ii<l2NeuronCount; ++ii ) // // 50 * 4 ^ 2
             {
                 n.AddConnection( ii, weightIndex: iNumWeight++ );
             }
@@ -248,7 +254,7 @@ class RecognizeDigits
         // So, there are 10 neurons and 10*(100+1)=1010 weights
         
         let lfNeuronCount = 10
-        let lfWeightCount = lfNeuronCount * (1 + l3NeuronCount)
+        let lfWeightCount = lfNeuronCount * (1 + l3NeuronCount) // 10 * (1 + 500)
         
         let pLayer4 = Layer( label: "Layer04", prev: pLayer3 );
         NN.layers.append( pLayer4 )
@@ -276,7 +282,6 @@ class RecognizeDigits
             for (var ii=0; ii<l3NeuronCount; ++ii )
             {
                 n.AddConnection( ii, weightIndex: iNumWeight++ );
-
             }
         }
     }

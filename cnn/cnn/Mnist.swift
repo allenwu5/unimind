@@ -170,15 +170,14 @@ class MnistInstance
 
     final func copyImageToNNInput(aNNInputLen:Int, aNNInputArea:Int) -> [Double]
     {
-        // 1 is white, -1 is black
+        // 0 ~ 255
         var nnInput = [Double](count: aNNInputArea, repeatedValue: -1.0)
 
         for (var ii = 0; ii < iHeight; ++ii)
         {
             for (var jj = 0; jj < iWidth; ++jj)
             {
-                let v = (Double)(iImage[ jj + iWidth*ii ])/128.0 - 1.0
-                //print(v)
+                let v = (Double)(iImage[ jj + iWidth*ii ])/128.0
                 nnInput[ (1 + jj) + aNNInputLen * (ii + 1) ] = v;
             }
         }
