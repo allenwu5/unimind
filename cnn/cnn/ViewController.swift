@@ -10,12 +10,12 @@ import UIKit
 
 class ViewController: UIViewController {
 
-    let useCache = false
+    let useCache = true
     let useTheanoWeight = false
     
 
-    let trainCases = 10000 // 60000
-    let testCases = 100 // 10000
+    let trainCases = 3000 // 60000
+    let testCases = 1 // 10000
 
     let io = IO()
 

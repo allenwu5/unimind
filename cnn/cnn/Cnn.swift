@@ -299,7 +299,7 @@ class NeuralNetwork : Mappable
         // This layer is a convolutional layer
         // that has 50 feature maps.  Each feature
         // map is 5x5, and each unit in the feature
-        // maps is a 5x5 convolutional kernel
+        // maps is a 5x5 convolutional kernel differentials[ differentials.count-1 ] = dErr_wrt_dXlast  // last one
         // of corresponding areas of all 6 of the
         // previous layers, each of which is a 13x13 feature map
         // So, there are 5x5x50 = 1250 neurons, (5x5+1)x6x50 = 7800 weights
@@ -629,7 +629,7 @@ class Layer : Mappable
     
     final func debugPrint()
     {
-//        printNeurons()
+        printNeurons()
 //        printWeights()
     }
     
