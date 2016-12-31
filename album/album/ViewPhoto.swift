@@ -7,14 +7,34 @@
 //
 
 import UIKit
+import Photos
 
 class ViewPhoto: UIViewController {
     @IBOutlet weak var imgView: UIImageView!
-
+    
+    var assetCollection: PHAssetCollection!
+    var photoAsset: PHFetchResult<PHAsset>!
+    
+    var index: Int = 0
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        self.navigationController?.hidesBarsOnTap = true
+        
+        self.displayPhoto()
+    }
+    
+    func displayPhoto()
+    {
+        let imageManager = PHImageManager.default()
+        var ID = imageManager.requestImage(for: self.photoAsset[self.index], targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {(result:UIImage?, info:[AnyHashable:Any]?)in
+            self.imgView.image = result
+        })
     }
 
     @IBAction func btnCancel(_ sender: Any) {
