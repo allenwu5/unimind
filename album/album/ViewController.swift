@@ -17,7 +17,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
 
     var albumFound: Bool = false
     var assetCollection: PHAssetCollection!
-    var photoAsset: PHFetchResult<PHAsset>!
+    var photosAsset: PHFetchResult<PHAsset>!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,7 +51,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     override func viewWillAppear(_ animated: Bool) {
         self.navigationController?.hidesBarsOnTap = false
         // Fetch the photos from collection
-        self.photoAsset = PHAsset.fetchAssets(in: self.assetCollection, options: nil)
+        self.photosAsset = PHAsset.fetchAssets(in: self.assetCollection, options: nil)
         
         
         self.collectionView.reloadData()
@@ -73,10 +73,10 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         {
             let controller:ViewPhoto = segue.destination as! ViewPhoto
             let indexPath:IndexPath = self.collectionView.indexPath(for: sender as! UICollectionViewCell)!
-            controller.index = indexPath.item
-            controller.assetCollection = self.assetCollection
-            controller.photoAsset = self.photoAsset
             
+            controller.index = indexPath.item
+            controller.photosAsset = self.photosAsset
+            controller.assetCollection = self.assetCollection
         }
     }
 
@@ -85,9 +85,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int
     {
         var count:Int = 0
-        if (self.photoAsset != nil)
+        if (self.photosAsset != nil)
         {
-            count = self.photoAsset.count;
+            count = self.photosAsset.count;
         }
         return count;
     }
@@ -97,13 +97,27 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     {
         let cell: PhotoThumbnail = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoThumbnail
 
-        let asset: PHAsset = self.photoAsset[indexPath.item]
+        let asset: PHAsset = self.photosAsset[indexPath.item]
         PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFill, options: nil, resultHandler: {
             (result: UIImage?, info:[AnyHashable: Any]?)in
             cell.setThumbnailImage(thumbnailImage: result!)
         })
         
         return cell
+    }
+    
+    // UICollectionViewDelegateFlowLayout
+    
+    @available(iOS 6.0, *)
+    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat
+    {
+        return 4
+    }
+    
+    @available(iOS 6.0, *)
+    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat
+    {
+        return 1
     }
 }
 

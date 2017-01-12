@@ -13,8 +13,7 @@ class ViewPhoto: UIViewController {
     @IBOutlet weak var imgView: UIImageView!
     
     var assetCollection: PHAssetCollection!
-    var photoAsset: PHFetchResult<PHAsset>!
-    
+    var photosAsset: PHFetchResult<PHAsset>!
     var index: Int = 0
     
     override func viewDidLoad() {
@@ -32,7 +31,7 @@ class ViewPhoto: UIViewController {
     func displayPhoto()
     {
         let imageManager = PHImageManager.default()
-        var ID = imageManager.requestImage(for: self.photoAsset[self.index], targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {(result:UIImage?, info:[AnyHashable:Any]?)in
+        var ID = imageManager.requestImage(for: self.photosAsset[self.index], targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {(result:UIImage?, info:[AnyHashable:Any]?)in
             self.imgView.image = result
         })
     }
@@ -51,6 +50,40 @@ class ViewPhoto: UIViewController {
     
     @IBAction func btnTrash(_ sender: Any) {
         print("trash clicked")
+        
+        let alert = UIAlertController(title: "刪除照片", message: "確定要刪除嗎？", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "是", style: .default, handler: {(alertAction)in
+            // Delete photo
+            PHPhotoLibrary.shared().performChanges({
+                let request = PHAssetCollectionChangeRequest(for: self.assetCollection)
+ 
+                request?.removeAssets([self.photosAsset[self.index]] as NSFastEnumeration)
+            }, completionHandler: { (success, error) in
+                NSLog("\nDeleted Image -> \(success)")
+                alert.dismiss(animated: true, completion: nil)
+                
+                self.photosAsset = PHAsset.fetchAssets(in: self.assetCollection, options: nil)
+                if (self.photosAsset.count == 0)
+                {
+                    self.imgView.image = nil
+                    print("No image left!")
+                }
+                
+                if (self.index >= self.photosAsset.count)
+                {
+                    self.index = self.photosAsset.count - 1
+                }
+                
+                self.displayPhoto()
+            })
+        }))
+        
+        alert.addAction(UIAlertAction(title: "否", style: .cancel, handler: {(alertAction)in
+            // Keep photo
+            
+        }))
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
     override func didReceiveMemoryWarning() {
