@@ -12,7 +12,7 @@ import Photos // from Photos.framework
 let reuseIdentifier = "PhotoCell"
 let albumName = "My App"
 
-class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     @IBOutlet weak var collectionView: UICollectionView!
 
     var albumFound: Bool = false
@@ -58,9 +58,31 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
 
     @IBAction func btnCamera(_ sender: Any) {
+        if (UIImagePickerController.isSourceTypeAvailable(.camera))
+        {
+            //load the camera interface
+            let picker : UIImagePickerController = UIImagePickerController()
+            picker.sourceType = .camera
+            picker.delegate = self
+            picker.allowsEditing = false
+            self.present(picker, animated: true, completion: nil)
+        }
+        else
+        {
+            let alert = UIAlertController(title: "Error", message: "No camera available", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: {(alertAction) in
+                alert.dismiss(animated: true, completion: nil)
+            }))
+            self.present(alert, animated: true, completion: nil)
+        }
     }
     
     @IBAction func btnPhotoAlbum(_ sender: Any) {
+        let picker : UIImagePickerController = UIImagePickerController()
+        picker.sourceType = .photoLibrary
+        picker.delegate = self
+        picker.allowsEditing = false
+        self.present(picker, animated: true, completion: nil)
     }
     
     override func didReceiveMemoryWarning() {
@@ -81,8 +103,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
 
     // Type 'ViewController' does not conform to protocol 'UICollectionViewDataSource'
-    @available(iOS 6.0, *)
-    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int
     {
         var count:Int = 0
         if (self.photosAsset != nil)
@@ -92,8 +113,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         return count;
     }
     
-    @available(iOS 6.0, *)
-    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell
     {
         let cell: PhotoThumbnail = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoThumbnail
 
@@ -107,17 +127,36 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     }
     
     // UICollectionViewDelegateFlowLayout
-    
-    @available(iOS 6.0, *)
-    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat
     {
         return 4
     }
     
-    @available(iOS 6.0, *)
-    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat
     {
         return 1
+    }
+    
+    // UIImagePickerControllerDelegate
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any])
+    {
+        let image = info["UIImagePickerControllerOriginalImage"] as! UIImage
+        
+        PHPhotoLibrary.shared().performChanges({
+            let createAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+            let assetPlaceholder = createAssetRequest.placeholderForCreatedAsset
+            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection, assets: self.photosAsset)
+            albumChangeRequest?.addAssets([assetPlaceholder] as NSFastEnumeration )
+        }, completionHandler: {(success, error)in
+            NSLog("Adding image to library -> %@", (success ? "Success" : "Error"))
+            picker.dismiss(animated: true, completion: nil)
+        })
+        
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController)
+    {
+        picker.dismiss(animated: true, completion: nil)
     }
 }
 
