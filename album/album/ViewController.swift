@@ -53,10 +53,54 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         // Fetch the photos from collection
         self.photosAsset = PHAsset.fetchAssets(in: self.assetCollection, options: nil)
         
-        
         self.collectionView.reloadData()
     }
 
+    @IBAction func btnPlay(_ sender: Any) {
+        var photoInfos = [PhotoInfo]()
+        for i in 0 ..< self.photosAsset.count
+        {
+            let asset: PHAsset = self.photosAsset[i]
+//            PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {
+//                (result: UIImage?, info:[AnyHashable: Any]?)in
+//                //cell.setThumbnailImage(thumbnailImage: result!)
+//                print("btnPlay")
+//                
+//            })
+            
+//            print(asset.location!)
+            PHImageManager.default().requestImageData(for: asset, options: nil) {
+                photoData, photoUTI, photoOrientation, photoInfo in
+                
+                let selectedImageSourceRef = CGImageSourceCreateWithData(photoData! as CFData, nil)!
+                let imagePropertiesDictionary = CGImageSourceCopyPropertiesAtIndex(selectedImageSourceRef, 0, nil)!
+
+                print(imagePropertiesDictionary)
+                if let dict = imagePropertiesDictionary as? [String: AnyObject] {
+                    if let tiff = dict["{TIFF}"]
+                    {
+                        if let dateTime:String = tiff["DateTime"] as? String {
+                            let photoInfo = PhotoInfo(name: dateTime, rating: 4)
+                            photoInfos.append(photoInfo!)
+                            
+                            let isSuccessfulSave = NSKeyedArchiver.archiveRootObject(photoInfos, toFile: PhotoInfo.ArchiveURL.path)
+                        }
+                    }
+                    
+                    if let exif = dict["{Exif}"]
+                    {
+                        if let dateTime:String = exif["DateTimeOriginal"] as? String {
+                            let photoInfo = PhotoInfo(name: dateTime, rating: 4)
+                            photoInfos.append(photoInfo!)
+                            
+                            let isSuccessfulSave = NSKeyedArchiver.archiveRootObject(photoInfos, toFile: PhotoInfo.ArchiveURL.path)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     @IBAction func btnCamera(_ sender: Any) {
         if (UIImagePickerController.isSourceTypeAvailable(.camera))
         {
@@ -116,9 +160,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell
     {
         let cell: PhotoThumbnail = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoThumbnail
-
+        
         let asset: PHAsset = self.photosAsset[indexPath.item]
-        PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFill, options: nil, resultHandler: {
+        PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {
             (result: UIImage?, info:[AnyHashable: Any]?)in
             cell.setThumbnailImage(thumbnailImage: result!)
         })

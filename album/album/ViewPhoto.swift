@@ -30,10 +30,13 @@ class ViewPhoto: UIViewController {
     
     func displayPhoto()
     {
-        let imageManager = PHImageManager.default()
-        var ID = imageManager.requestImage(for: self.photosAsset[self.index], targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {(result:UIImage?, info:[AnyHashable:Any]?)in
-            self.imgView.image = result
-        })
+        if (self.index >= 0)
+        {
+            let imageManager = PHImageManager.default()
+            _ = imageManager.requestImage(for: self.photosAsset[self.index], targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: nil, resultHandler: {(result:UIImage?, info:[AnyHashable:Any]?)in
+                self.imgView.image = result
+            })
+        }
     }
 
     @IBAction func btnCancel(_ sender: Any) {

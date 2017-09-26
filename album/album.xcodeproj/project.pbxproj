@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BF29402E1E097F600078A215 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF29402D1E097F600078A215 /* Photos.framework */; };
+		BF4E4CBE1F571119008AB115 /* PhotoInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4E4CBD1F571119008AB115 /* PhotoInfo.swift */; };
 		BFA0EF801DFC19A0005380EA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA0EF7F1DFC19A0005380EA /* AppDelegate.swift */; };
 		BFA0EF821DFC19A0005380EA /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA0EF811DFC19A0005380EA /* ViewController.swift */; };
 		BFA0EF851DFC19A0005380EA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFA0EF831DFC19A0005380EA /* Main.storyboard */; };
@@ -38,6 +39,7 @@
 
 /* Begin PBXFileReference section */
 		BF29402D1E097F600078A215 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
+		BF4E4CBD1F571119008AB115 /* PhotoInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoInfo.swift; sourceTree = "<group>"; };
 		BFA0EF7C1DFC19A0005380EA /* album.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = album.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFA0EF7F1DFC19A0005380EA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BFA0EF811DFC19A0005380EA /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				BFA0EF861DFC19A0005380EA /* Assets.xcassets */,
 				BFA0EF881DFC19A0005380EA /* LaunchScreen.storyboard */,
 				BFA0EF8B1DFC19A0005380EA /* Info.plist */,
+				BF4E4CBD1F571119008AB115 /* PhotoInfo.swift */,
 			);
 			path = album;
 			sourceTree = "<group>";
@@ -283,6 +286,7 @@
 				BFA0EF821DFC19A0005380EA /* ViewController.swift in Sources */,
 				BFACD0C71E10D84000667DA3 /* PhotoThumbnail.swift in Sources */,
 				BFA0EFAE1E02ED31005380EA /* ViewPhoto.swift in Sources */,
+				BF4E4CBE1F571119008AB115 /* PhotoInfo.swift in Sources */,
 				BFA0EF801DFC19A0005380EA /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
