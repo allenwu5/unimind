@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		BF29402E1E097F600078A215 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF29402D1E097F600078A215 /* Photos.framework */; };
 		BF4E4CBE1F571119008AB115 /* PhotoInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4E4CBD1F571119008AB115 /* PhotoInfo.swift */; };
+		BF883B011F93A82B00D70945 /* Inceptionv3.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = BF883AFF1F93A80F00D70945 /* Inceptionv3.mlmodel */; };
 		BFA0EF801DFC19A0005380EA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA0EF7F1DFC19A0005380EA /* AppDelegate.swift */; };
 		BFA0EF821DFC19A0005380EA /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA0EF811DFC19A0005380EA /* ViewController.swift */; };
 		BFA0EF851DFC19A0005380EA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFA0EF831DFC19A0005380EA /* Main.storyboard */; };
@@ -40,6 +41,7 @@
 /* Begin PBXFileReference section */
 		BF29402D1E097F600078A215 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		BF4E4CBD1F571119008AB115 /* PhotoInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoInfo.swift; sourceTree = "<group>"; };
+		BF883AFF1F93A80F00D70945 /* Inceptionv3.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = Inceptionv3.mlmodel; path = ../../coreml/Inceptionv3.mlmodel; sourceTree = "<group>"; };
 		BFA0EF7C1DFC19A0005380EA /* album.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = album.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFA0EF7F1DFC19A0005380EA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BFA0EF811DFC19A0005380EA /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 		BFA0EF731DFC199F005380EA = {
 			isa = PBXGroup;
 			children = (
+				BF883AFF1F93A80F00D70945 /* Inceptionv3.mlmodel */,
 				BFA0EF7E1DFC19A0005380EA /* album */,
 				BFA0EF931DFC19A0005380EA /* albumTests */,
 				BFA0EF9E1DFC19A0005380EA /* albumUITests */,
@@ -288,6 +291,7 @@
 				BFA0EFAE1E02ED31005380EA /* ViewPhoto.swift in Sources */,
 				BF4E4CBE1F571119008AB115 /* PhotoInfo.swift in Sources */,
 				BFA0EF801DFC19A0005380EA /* AppDelegate.swift in Sources */,
+				BF883B011F93A82B00D70945 /* Inceptionv3.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -382,7 +386,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -425,7 +429,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";

@@ -8,9 +8,12 @@
 
 import UIKit
 import Photos // from Photos.framework
+import CoreML
 
 let reuseIdentifier = "PhotoCell"
 let albumName = "My App"
+var model_inceptionv3: Inceptionv3!
+let imageWidth = 299
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     @IBOutlet weak var collectionView: UICollectionView!
@@ -26,26 +29,24 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         let fetchOptions = PHFetchOptions()
         fetchOptions.predicate = NSPredicate(format: "title = %@", albumName)
         
-        let collection = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions)
-        if (collection.firstObject != nil)
+        var collection = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions)
+        if (collection.firstObject == nil)
         {
-            self.albumFound = true
-            self.assetCollection = collection.firstObject!
+            // Folder "My App" does not exist, create it
+            do {
+                try PHPhotoLibrary.shared().performChangesAndWait({
+                    NSLog("\nFolder \"%@\" does not exist\nCreating now...", albumName)
+                    _ = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: albumName)
+                })
+            }
+            catch let error {
+                print("Creating album error: \(error)")
+            }
+
+            collection = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions)
         }
-        else
-        {
-            // Folder "My App" does not exist
-            // Creating now...
-            NSLog("\nFolder \"%@\" does not exist\nCreating now...", albumName)
-            PHPhotoLibrary.shared().performChanges({
-                _ = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: albumName)
-                
-            }, completionHandler: {(success:Bool, error: Error?)in
-                let s:String = success ? "Success" : "Error!"
-                NSLog("Creation of folder  \(s)")
-                self.albumFound = success
-            })
-        }
+        self.albumFound = true
+        self.assetCollection = collection.firstObject!
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -54,6 +55,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         self.photosAsset = PHAsset.fetchAssets(in: self.assetCollection, options: nil)
         
         self.collectionView.reloadData()
+        
+        // Why initialization here would be faster than in viewDidLoad
+        model_inceptionv3 = Inceptionv3()
     }
 
     @IBAction func btnPlay(_ sender: Any) {
@@ -184,18 +188,63 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     // UIImagePickerControllerDelegate
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any])
     {
-        let image = info["UIImagePickerControllerOriginalImage"] as! UIImage
+        guard let image = info["UIImagePickerControllerOriginalImage"] as? UIImage else {
+            return
+        }
         
-        PHPhotoLibrary.shared().performChanges({
-            let createAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
-            let assetPlaceholder = createAssetRequest.placeholderForCreatedAsset
-            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection, assets: self.photosAsset)
-            albumChangeRequest?.addAssets([assetPlaceholder] as NSFastEnumeration )
-        }, completionHandler: {(success, error)in
-            NSLog("Adding image to library -> %@", (success ? "Success" : "Error"))
-            picker.dismiss(animated: true, completion: nil)
-        })
+//        PHPhotoLibrary.shared().performChanges({
+//            let createAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+//            let assetPlaceholder = createAssetRequest.placeholderForCreatedAsset
+//            let albumChangeRequest = PHAssetCollectionChangeRequest(for: self.assetCollection, assets: self.photosAsset)
+//            albumChangeRequest?.addAssets([assetPlaceholder] as NSFastEnumeration )
+//        }, completionHandler: {(success, error)in
+//            NSLog("Adding image to library -> %@", (success ? "Success" : "Error"))
+//            picker.dismiss(animated: true, completion: nil)
+//        })
         
+        // Start of https://www.appcoda.com.tw/coreml-introduction/
+        NSLog("Analyzing Image...")
+        
+        // Change size and exporting as newImage
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: imageWidth, height: imageWidth), true, 2.0)
+        image.draw(in: CGRect(x: 0, y: 0, width: imageWidth, height: imageWidth))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        
+        // CVPixelBuffer
+        let attrs = [kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue, kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue] as CFDictionary
+        var pixelBuffer : CVPixelBuffer?
+        let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(newImage.size.width), Int(newImage.size.height), kCVPixelFormatType_32ARGB, attrs, &pixelBuffer)
+        guard (status == kCVReturnSuccess) else {
+            return
+        }
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer!, CVPixelBufferLockFlags(rawValue: 0))
+        let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer!)
+        
+        let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
+        let context = CGContext(data: pixelData, width: Int(newImage.size.width), height: Int(newImage.size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer!), space: rgbColorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue) //3
+        
+        // CGContext
+        context?.translateBy(x: 0, y: newImage.size.height)
+        context?.scaleBy(x: 1.0, y: -1.0)
+        
+        // Draw new one and removing old one ?
+        UIGraphicsPushContext(context!)
+        newImage.draw(in: CGRect(x: 0, y: 0, width: newImage.size.width, height: newImage.size.height))
+        UIGraphicsPopContext()
+        CVPixelBufferUnlockBaseAddress(pixelBuffer!, CVPixelBufferLockFlags(rawValue: 0))
+        // imageView.image = newImage
+        
+        // Using Core ML
+        guard let prediction = try? model_inceptionv3.prediction(image: pixelBuffer!) else {
+            return
+        }
+        
+        NSLog("I think this is a \(prediction.classLabel).")
+        
+        picker.dismiss(animated: true, completion: nil)
+        // End of https://www.appcoda.com.tw/coreml-introduction/
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController)
