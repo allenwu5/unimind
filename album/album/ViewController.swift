@@ -22,6 +22,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     var assetCollection: PHAssetCollection!
     var photosAsset: PHFetchResult<PHAsset>!
     
+    @IBOutlet weak var photoClass: UILabel!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -79,7 +81,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
                 let selectedImageSourceRef = CGImageSourceCreateWithData(photoData! as CFData, nil)!
                 let imagePropertiesDictionary = CGImageSourceCopyPropertiesAtIndex(selectedImageSourceRef, 0, nil)!
 
-                print(imagePropertiesDictionary)
+                if let theJSONData = try? JSONSerialization.data(
+                    withJSONObject: imagePropertiesDictionary,
+                    options: []) {
+                        let theJSONText = String(data: theJSONData,
+                                                 encoding: .ascii)
+                    
+                    NSLog(theJSONText!)
+                    self.photoClass.text = theJSONText
+                }
+
                 if let dict = imagePropertiesDictionary as? [String: AnyObject] {
                     if let tiff = dict["{TIFF}"]
                     {
@@ -241,7 +252,9 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             return
         }
         
-        NSLog("I think this is a \(prediction.classLabel).")
+        let strPhotoClass = "It looks like ... \(prediction.classLabel)."
+        NSLog(strPhotoClass)
+        photoClass.text = strPhotoClass
         
         picker.dismiss(animated: true, completion: nil)
         // End of https://www.appcoda.com.tw/coreml-introduction/
